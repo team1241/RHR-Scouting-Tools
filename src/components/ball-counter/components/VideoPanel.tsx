@@ -3,13 +3,19 @@ import {
   type RefObject,
 } from "react";
 import KeyboardShortcuts from "./KeyboardShortcuts";
+import VideoSourceInputs from "./VideoSourceInputs";
+import VideoSourceToggle from "./VideoSourceToggle";
 
 type VideoPanelProps = {
   isHtml5: boolean;
   isYouTube: boolean;
   videoUrl: string;
+  selectedSource: "youtube" | "local";
+  onSourceChange: (value: "youtube" | "local") => void;
   onVideoUrlChange: (value: string) => void;
   onLoad: () => void;
+  onLocalFileSelect: (file: File | null) => void;
+  localVideoLabel: string;
   error: string;
   loadedUrl: string;
   onVideoKeyDown: (event: ReactKeyboardEvent<HTMLVideoElement>) => void;
@@ -21,8 +27,12 @@ export default function VideoPanel({
   isHtml5,
   isYouTube,
   videoUrl,
+  selectedSource,
+  onSourceChange,
   onVideoUrlChange,
   onLoad,
+  onLocalFileSelect,
+  localVideoLabel,
   error,
   loadedUrl,
   onVideoKeyDown,
@@ -32,22 +42,20 @@ export default function VideoPanel({
   return (
     <section className="flex flex-col gap-5 rounded-[28px] border border-border bg-surface/90 p-6">
       <div className="rounded-2xl bg-surface">
-        <label className="text-xl font-semibold text-ink">Video Player</label>
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-          <input
-            type="url"
-            className="w-full rounded-2xl border border-border bg-surface-soft px-4 py-3 text-sm text-ink focus:border-accent focus:outline-none"
-            placeholder="Paste a YouTube link"
-            value={videoUrl}
-            onChange={(event) => onVideoUrlChange(event.target.value)}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <label className="text-xl font-semibold text-ink">Video Player</label>
+          <VideoSourceToggle value={selectedSource} onChange={onSourceChange} />
+        </div>
+        <div className="mt-3 flex flex-col gap-3">
+          <VideoSourceInputs
+            key={selectedSource}
+            selectedSource={selectedSource}
+            videoUrl={videoUrl}
+            onVideoUrlChange={onVideoUrlChange}
+            onLoad={onLoad}
+            onLocalFileSelect={onLocalFileSelect}
+            localVideoLabel={localVideoLabel}
           />
-          <button
-            type="button"
-            onClick={onLoad}
-            className="rounded-full bg-linear-to-br from-accent-strong to-accent px-5 py-2 text-sm font-semibold text-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md min-w-fit"
-          >
-            Load video
-          </button>
         </div>
         {error ? (
           <p className="mt-3 text-sm font-medium text-danger">{error}</p>
