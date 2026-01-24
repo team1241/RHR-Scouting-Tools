@@ -11,7 +11,7 @@ http.route({
 })
 
 http.route({
-    path: "/cycles/:id",
+    path: "/cycles",
     method: "GET",
     handler: getCyclesHttp
 })
