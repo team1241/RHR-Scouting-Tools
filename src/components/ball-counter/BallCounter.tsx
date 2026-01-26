@@ -110,41 +110,39 @@ function BallCounterContent() {
   };
 
   return (
-    <div className="min-h-screen pb-12 pt-10">
-      <div className="flex w-full flex-col gap-4">
-        <Hero />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-          <VideoPanel
-            isHtml5={isHtml5}
-            isYouTube={isYouTube}
-            videoUrl={videoUrl}
-            selectedSource={selectedSource}
-            onSourceChange={handleSourceChange}
-            onVideoUrlChange={handleVideoUrlChange}
-            onLoad={handleLoad}
-            onLocalFileSelect={handleLocalFileSelect}
-            localVideoLabel={loadedVideoLabel}
-            error={error}
-            loadedUrl={loadedUrl}
-            onVideoKeyDown={handleVideoKeyDown}
-            videoRef={videoRef}
-            youtubeContainerRef={youtubeContainerRef}
-          />
-          <StatsPanel
-            marks={marks}
-            averageBps={averageBps}
-            cycles={cycles}
-            activeCycleStart={activeCycleStart}
-            videoUrl={loadedVideoUrl}
-            shotType={shotType}
-            onShotTypeChange={setShotType}
-            onClearMarks={clearAll}
-            onRemoveMark={removeMark}
-            onStartCycle={startCycle}
-            onEndCycle={endCycle}
-            onRemoveCycle={removeCycle}
-          />
-        </div>
+    <div className="flex w-full flex-col gap-4 min-h-screen pb-12 pt-10">
+      <Hero text="Ball Counter" />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        <VideoPanel
+          isHtml5={isHtml5}
+          isYouTube={isYouTube}
+          videoUrl={videoUrl}
+          selectedSource={selectedSource}
+          onSourceChange={handleSourceChange}
+          onVideoUrlChange={handleVideoUrlChange}
+          onLoad={handleLoad}
+          onLocalFileSelect={handleLocalFileSelect}
+          localVideoLabel={loadedVideoLabel}
+          error={error}
+          loadedUrl={loadedUrl}
+          onVideoKeyDown={handleVideoKeyDown}
+          videoRef={videoRef}
+          youtubeContainerRef={youtubeContainerRef}
+        />
+        <StatsPanel
+          marks={marks}
+          averageBps={averageBps}
+          cycles={cycles}
+          activeCycleStart={activeCycleStart}
+          videoUrl={loadedVideoUrl}
+          shotType={shotType}
+          onShotTypeChange={setShotType}
+          onClearMarks={clearAll}
+          onRemoveMark={removeMark}
+          onStartCycle={startCycle}
+          onEndCycle={endCycle}
+          onRemoveCycle={removeCycle}
+        />
       </div>
     </div>
   );

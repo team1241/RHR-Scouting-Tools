@@ -1,7 +1,5 @@
+import NavLinks from "@/components/common/header/NavLinks";
 import Image from "next/image";
-import Link from "next/link";
-
-const BALL_COUNTER_HREF = "/ball-counter";
 
 export default function TopNavBar() {
   return (
@@ -25,12 +23,7 @@ export default function TopNavBar() {
             Scouting Tools
           </span>
         </div>
-        <Link
-          className="text-sm font-medium text-ink-muted transition hover:text-ink"
-          href={{ pathname: BALL_COUNTER_HREF }}
-        >
-          Ball Counter
-        </Link>
+        <NavLinks />
       </div>
     </header>
   );

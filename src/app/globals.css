@@ -38,6 +38,12 @@
   }
 
   button {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg transition-transform duration-100 active:scale-95;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    @apply cursor-pointer;
   }
 }

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "../components/providers";
-import TopNavBar from "@/components/common/Header";
+import TopNavBar from "@/components/common/header/Header";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -29,7 +29,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} ${ibmPlexMono.variable}`}>
+    <html
+      lang="en"
+      className={`${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
+    >
       <body>
         <Providers>
           <TopNavBar />
