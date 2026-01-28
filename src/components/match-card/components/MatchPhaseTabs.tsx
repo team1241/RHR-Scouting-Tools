@@ -26,15 +26,11 @@ export default function MatchPhaseTabs({
     >
       <TabsList
         variant="line"
-        className="flex flex-wrap gap-2 bg-transparent p-0"
+        className="flex flex-wrap gap-2"
         aria-label="Match phase"
       >
         {options.map((option) => (
-          <TabsTrigger
-            key={option.value}
-            value={option.value}
-            className="h-auto rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] data-[state=active]:border-accent data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=inactive]:border-border data-[state=inactive]:bg-background data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground"
-          >
+          <TabsTrigger key={option.value} value={option.value}>
             {option.label}
           </TabsTrigger>
         ))}

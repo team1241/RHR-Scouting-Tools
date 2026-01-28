@@ -19,7 +19,10 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rebuilt Scouting Tools",
+  title: {
+    default: "REBUILT Tools",
+    template: "%s | REBUILT Tools",
+  },
   description: "A suite of tools to scout Rebuilt",
 };
 
