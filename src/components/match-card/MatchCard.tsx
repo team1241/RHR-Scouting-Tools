@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import Hero from "@/components/common/Hero";
-import MatchPhaseTabs from "@/components/match-card/components/MatchPhaseTabs";
+import MatchCardTabs from "@/components/match-card/components/header/MatchCardTabs";
 import AutoMatchCard from "@/components/match-card/components/auto/AutoMatchCard";
-import TeleopMatchCard from "@/components/match-card/components/teleop/TeleopMatchCard";
-import MatchCardHeader from "@/components/match-card/components/common/MatchCardHeader";
+import GeneralMatchCard from "@/components/match-card/components/general/GeneralMatchCard";
+import MatchCardHeader from "@/components/match-card/components/header/MatchCardHeader";
 import { Card } from "@/components/ui/card";
 
 type AllianceTeam = {
@@ -53,14 +53,18 @@ function generateAllianceTeams(
 }
 
 export default function MatchCard() {
-  const [phase, setPhase] = useState<"auto" | "teleop">("auto");
+  const [phase, setPhase] = useState<"auto" | "general">("general");
   const [eventId, setEventId] = useState("2026miket");
   const [matchNumber, setMatchNumber] = useState("1");
 
   const parsedMatchNumber = Number.parseInt(matchNumber, 10) || 1;
   const [redAlliance, blueAlliance] = useMemo(
     () => [
-      generateAllianceTeams(eventId.trim() || "event", parsedMatchNumber, "red"),
+      generateAllianceTeams(
+        eventId.trim() || "event",
+        parsedMatchNumber,
+        "red",
+      ),
       generateAllianceTeams(
         eventId.trim() || "event",
         parsedMatchNumber,
@@ -94,7 +98,7 @@ export default function MatchCard() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Hero text="Match Card" />
         <div className="flex flex-wrap items-center gap-3">
-          <MatchPhaseTabs value={phase} onChange={setPhase} />
+          <MatchCardTabs value={phase} onChange={setPhase} />
         </div>
       </div>
       <Card className="flex w-full flex-col gap-4 rounded-xl bg-white/80 p-4 shadow-sm">
@@ -114,7 +118,7 @@ export default function MatchCard() {
             blueAlliance={blueAlliance}
           />
         ) : (
-          <TeleopMatchCard />
+          <GeneralMatchCard />
         )}
       </Card>
     </div>

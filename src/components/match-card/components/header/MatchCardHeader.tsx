@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import TeamMediaDialog from "@/components/match-card/components/TeamMediaDialog";
+import TeamMediaDialog from "@/components/match-card/components/header/TeamMediaDialog";
 
 type AllianceTeam = {
   number: number;

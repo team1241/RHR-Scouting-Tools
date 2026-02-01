@@ -3,16 +3,16 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type MatchPhaseTabsProps = {
-  value: "auto" | "teleop";
-  onChange: (value: "auto" | "teleop") => void;
+  value: "auto" | "general";
+  onChange: (value: "auto" | "general") => void;
 };
 
 const options = [
+  { value: "general", label: "General" },
   { value: "auto", label: "Auto" },
-  { value: "teleop", label: "Teleop" },
 ] as const;
 
-export default function MatchPhaseTabs({
+export default function MatchCardTabs({
   value,
   onChange,
 }: MatchPhaseTabsProps) {
