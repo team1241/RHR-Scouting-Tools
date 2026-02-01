@@ -39,7 +39,9 @@ export default function RootLayout({
       <body className="bg-background">
         <Providers>
           <TopNavBar />
-          <div className="min-h-screen pt-12 mx-auto max-w-7xl">{children}</div>
+          <div className="min-h-screen pt-12 mx-auto max-w-7xl px-10">
+            {children}
+          </div>
         </Providers>
       </body>
     </html>
