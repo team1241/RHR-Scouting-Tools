@@ -28,19 +28,15 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-interface GeneralMatchCardProps {}
+interface GeneralMatchCardProps {
+  eventId: string;
+  matchNumber: string;
+}
 
-export default function GeneralMatchCard({}: GeneralMatchCardProps) {
-  const redAlliance: AllianceTeam[] = [
-    { name: "Theory6", number: 1241 },
-    { name: "Theory6", number: 1241 },
-    { name: "Theory6", number: 1241 },
-  ];
-  const blueAlliance: AllianceTeam[] = [
-    { name: "Theory6", number: 1241 },
-    { name: "Theory6", number: 1241 },
-    { name: "Theory6", number: 1241 },
-  ];
+export default function GeneralMatchCard({
+  eventId,
+  matchNumber,
+}: GeneralMatchCardProps) {
   const columns = useMatchCardColumns({
     redAlliance: SAMPLE_RED_ALLIANCE,
     blueAlliance: SAMPLE_BLUE_ALLIANCE,
@@ -93,31 +89,6 @@ export default function GeneralMatchCard({}: GeneralMatchCardProps) {
               })}
             </TableRow>
           ))}
-          {/* <TableRow>
-            {redAlliance.map((team) => (
-              <TableHead
-                key={`red-head-${team.number}`}
-                className=""
-              >
-                {team.number}
-              </TableHead>
-            ))}
-            <TableHead className="bg-red-100 text-center text-red-700">
-              Total
-            </TableHead>
-            <TableHead colSpan={2} aria-hidden className="text-center" />
-            <TableHead className="bg-blue-100 text-center text-blue-700">
-              Total
-            </TableHead>
-            {blueAlliance.map((team) => (
-              <TableHead
-                key={`blue-head-${team.number}`}
-                className="bg-blue-50 text-center text-blue-700 last:rounded-tr-lg"
-              >
-                {team.number}
-              </TableHead>
-            ))}
-          </TableRow> */}
         </TableHeader>
         <TableBody className="text-center">
           {matchCardTable.getRowModel().rows?.length ? (
@@ -140,34 +111,6 @@ export default function GeneralMatchCard({}: GeneralMatchCardProps) {
               </TableCell>
             </TableRow>
           )}
-          {/* {GENERAL_MATCH_CARD_CATEGORIES.map((category) => (
-            <TableRow key={category.dataKey} className="h-10">
-              {redAlliance.map((team) => (
-                <TableCell
-                  key={`red-${team.number}-${category.dataKey}`}
-                  className="text-center"
-                >
-                  0
-                </TableCell>
-              ))}
-              <TableCell className="text-center">0</TableCell>
-              <TableCell
-                colSpan={2}
-                className="text-center font-medium text-slate-900"
-              >
-                {category.label}
-              </TableCell>
-              <TableCell className="text-center">0</TableCell>
-              {blueAlliance.map((team) => (
-                <TableCell
-                  key={`blue-${team.number}-${category.dataKey}`}
-                  className="text-center"
-                >
-                  0
-                </TableCell>
-              ))}
-            </TableRow>
-          ))} */}
         </TableBody>
       </Table>
     </div>

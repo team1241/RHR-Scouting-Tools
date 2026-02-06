@@ -28,9 +28,10 @@ import {
 } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Camera01Icon } from "@hugeicons/core-free-icons";
+import { Camera01Icon, Image03Icon } from "@hugeicons/core-free-icons";
 import { useTeamImages } from "@/hooks/use-team-images";
 import { TeamInMatch } from "@/lib/db/types";
+import Link from "next/link";
 
 type TeamMediaDialogProps = {
   allianceColour: "red" | "blue";
@@ -106,6 +107,15 @@ export default function TeamMediaDialog({
                         >
                           {team.teamNumber}
                         </div>
+                        <Link href={new URL(imageUrls[0])}>
+                          <div className="absolute right-2 top-2 z-10 rounded-md px-2 py-1 text-xs font-semibold text-white shadow flex flex-row gap-2 bg-emerald-600">
+                            View full image{" "}
+                            <HugeiconsIcon
+                              icon={Image03Icon}
+                              className="size-4"
+                            />
+                          </div>
+                        </Link>
                         <Image
                           src={imageUrls[0]}
                           alt={`Image of team ${team.teamNumber}`}
