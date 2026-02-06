@@ -34,7 +34,11 @@ export default function MatchCard() {
           onEventIdChange={(nextValue) => setEventId(nextValue || null)}
           onMatchNumberChange={(nextValue) => setMatchNumber(nextValue || null)}
         />
-        {phase === "auto" ? <AutoMatchCard /> : <GeneralMatchCard />}
+        {phase === "auto" ? (
+          <AutoMatchCard />
+        ) : (
+          <GeneralMatchCard eventId={eventId} matchNumber={matchNumber} />
+        )}
       </Card>
     </div>
   );

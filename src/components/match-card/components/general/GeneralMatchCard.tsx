@@ -29,8 +29,8 @@ import {
 } from "@tanstack/react-table";
 
 interface GeneralMatchCardProps {
-  eventId: string;
-  matchNumber: string;
+  eventId: string | null;
+  matchNumber: string | null;
 }
 
 export default function GeneralMatchCard({
