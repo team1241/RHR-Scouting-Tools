@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import { DEFAULT_FPS } from "@/constants";
+import { DEFAULT_FPS } from "@/components/ball-counter/constants";
 import type { YouTubePlayer } from "./useYouTubePlayer";
 
 type UsePlaybackControlsOptions = {

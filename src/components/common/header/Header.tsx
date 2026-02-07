@@ -1,4 +1,9 @@
+"use client";
 import NavLinks from "@/components/common/header/NavLinks";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { SignInButton, UserButton } from "@clerk/nextjs";
+import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import Image from "next/image";
 
 export default function TopNavBar() {
@@ -18,6 +23,19 @@ export default function TopNavBar() {
           </span>
         </div>
         <NavLinks />
+        <div>
+          <AuthLoading>
+            <Skeleton className="size-7 rounded-full" />
+          </AuthLoading>
+          <Authenticated>
+            <UserButton />
+          </Authenticated>
+          <Unauthenticated>
+            <SignInButton mode="modal">
+              <Button>Sign in</Button>
+            </SignInButton>
+          </Unauthenticated>
+        </div>
       </div>
     </header>
   );

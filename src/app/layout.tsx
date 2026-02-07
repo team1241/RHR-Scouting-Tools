@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import Providers from "../components/providers";
+import Providers from "../providers/providers";
 import TopNavBar from "@/components/common/header/Header";
 
 const spaceGrotesk = Space_Grotesk({

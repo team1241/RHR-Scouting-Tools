@@ -15,6 +15,7 @@ import {
 } from "../schemas/create-metadata.schema";
 import useCycleTracking from "@/components/ball-counter/hooks/useCycleTracking";
 import type { Cycle } from "@/components/ball-counter/types";
+import { useUser } from "@clerk/nextjs";
 
 type SaveMetadataModalProps = {
   isOpen: boolean;
@@ -31,9 +32,11 @@ export default function SaveMetadataModal({
 
   const { cycles } = useCycleTracking();
 
+  const { user } = useUser();
+
   const form = useForm<MetadataFormValues>({
     defaultValues: {
-      userName: "",
+      userName: user?.fullName ?? "",
       eventCode: "",
       matchNumber: "",
       teamNumber: "",
@@ -94,6 +97,7 @@ export default function SaveMetadataModal({
       }
     },
   });
+  console.log("🚀 ~ SaveMetadataModal ~ form:", form.getFieldValue("userName"));
 
   useEffect(() => {
     if (!isOpen) return;
@@ -155,38 +159,6 @@ export default function SaveMetadataModal({
             void form.handleSubmit();
           }}
         >
-          <form.Field name="userName">
-            {(field) => {
-              const fieldError = field.state.meta.isTouched
-                ? field.state.meta.errors?.[0]
-                : undefined;
-              const inputId = `${field.name}-input`;
-              return (
-                <div className="space-y-2">
-                  <Label
-                    htmlFor={inputId}
-                    className="text-sm font-semibold text-foreground"
-                  >
-                    Your name
-                  </Label>
-                  <Input
-                    id={inputId}
-                    type="text"
-                    value={field.state.value}
-                    onBlur={field.handleBlur}
-                    onChange={(event) => field.handleChange(event.target.value)}
-                    placeholder="ex: Jordan"
-                  />
-                  {fieldError ? (
-                    <span className="block text-xs text-destructive">
-                      {fieldError}
-                    </span>
-                  ) : null}
-                </div>
-              );
-            }}
-          </form.Field>
-
           <form.Field name="eventCode">
             {(field) => {
               const fieldError = field.state.meta.isTouched
