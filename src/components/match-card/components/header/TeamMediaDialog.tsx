@@ -46,7 +46,7 @@ export default function TeamMediaDialog({
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const { data: images } = useTeamImages({
-    teamNumbers: teams.map((team) => team.teamNumber),
+    teamNumbers: teams.map((team) => team.team.number),
   });
 
   useEffect(() => {
@@ -92,10 +92,10 @@ export default function TeamMediaDialog({
           <CarouselContent className="ml-0">
             {teams.map((team) => {
               const imageUrls = images?.find(
-                (image) => image.teamNumber === team.teamNumber,
+                (image) => image.teamNumber === team.team.number,
               )?.imageUrls;
               return (
-                <CarouselItem className="pl-0" key={team.teamNumber}>
+                <CarouselItem className="pl-0" key={team.team.number}>
                   <div className="flex h-full flex-col gap-3 rounded-lg border border-border bg-background">
                     {imageUrls && imageUrls.length > 0 ? (
                       <div className="relative aspect-4/3 w-full overflow-hidden rounded-md border bg-muted">
@@ -107,7 +107,7 @@ export default function TeamMediaDialog({
                               : "bg-blue-600/90 ring-1 ring-blue-500",
                           )}
                         >
-                          {team.teamNumber}
+                          {`${team.team.number} - ${team.team.name}`}
                         </div>
                         <Link
                           href={new URL(imageUrls[0])}
@@ -124,7 +124,7 @@ export default function TeamMediaDialog({
                         </Link>
                         <Image
                           src={imageUrls[0]}
-                          alt={`Image of team ${team.teamNumber}`}
+                          alt={`Image of team ${team.team.number}`}
                           fill
                           className="object-cover"
                           sizes="(max-width: 768px) 90vw, 840px"
@@ -151,11 +151,11 @@ export default function TeamMediaDialog({
         <DialogFooter className="flex flex-row flex-wrap gap-2 sm:justify-center">
           {teams.map((team, index) => {
             const imageUrls = images?.find(
-              (image) => image.teamNumber === team.teamNumber,
+              (image) => image.teamNumber === team.team.number,
             )?.imageUrls;
             return (
               <button
-                key={`${team.teamNumber}-preview`}
+                key={`${team.team.number}-preview`}
                 type="button"
                 onClick={() => api?.scrollTo(index)}
                 className={cn(
@@ -168,7 +168,7 @@ export default function TeamMediaDialog({
                 {imageUrls && imageUrls.length > 0 ? (
                   <Image
                     src={imageUrls[0]}
-                    alt={`Preview ${index + 1} for team ${team.teamNumber}`}
+                    alt={`Preview ${index + 1} for team ${team.team.number}`}
                     fill
                     className="object-cover"
                     sizes="96px"

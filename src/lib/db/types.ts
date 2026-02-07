@@ -64,7 +64,11 @@ export interface FieldImage {
 export interface TeamInMatch {
   colour: string,
   driverStation: number,
-  teamNumber: number
+  team: {
+    id: number,
+    number: number,
+    name: string
+  }
 }
 
 export interface TeamsInMatchResponse {

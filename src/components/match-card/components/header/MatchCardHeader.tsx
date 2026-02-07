@@ -132,7 +132,7 @@ export default function MatchCardHeader({
                     ))
                   : redAlliance?.map((team, index) => (
                       <TableHead
-                        key={`red-head-${team.teamNumber}`}
+                        key={`red-head-${team.team.number}`}
                         className="text-center"
                       >
                         Driver Station {index + 1}
@@ -162,10 +162,10 @@ export default function MatchCardHeader({
                       ))
                     : redAlliance?.map((team) => (
                         <TableCell
-                          key={`red-${team.teamNumber}`}
+                          key={`red-${team.team.number}`}
                           className="text-center text-base font-semibold text-slate-900"
                         >
-                          {team.teamNumber}
+                          {team.team.number}
                         </TableCell>
                       ))}
               </TableRow>
@@ -192,7 +192,7 @@ export default function MatchCardHeader({
                     ))
                   : blueAlliance?.map((team, index) => (
                       <TableHead
-                        key={`blue-head-${team.teamNumber}`}
+                        key={`blue-head-${team.team.number}`}
                         className="text-center"
                       >
                         Driver Station {index + 1}
@@ -222,10 +222,10 @@ export default function MatchCardHeader({
                       ))
                     : blueAlliance?.map((team) => (
                         <TableCell
-                          key={`blue-${team.teamNumber}`}
+                          key={`blue-${team.team.number}`}
                           className="text-center text-base font-semibold text-slate-900"
                         >
-                          {team.teamNumber}
+                          {team.team.number}
                         </TableCell>
                       ))}
               </TableRow>
