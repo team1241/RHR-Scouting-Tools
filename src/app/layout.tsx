@@ -20,10 +20,10 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "REBUILT Tools",
-    template: "%s | REBUILT Tools",
+    default: "RHR Scouting Tools",
+    template: "%s | RHR Scouting Tools",
   },
-  description: "A suite of tools to scout Rebuilt",
+  description: "A suite of scouting tools for RHR",
 };
 
 export default function RootLayout({

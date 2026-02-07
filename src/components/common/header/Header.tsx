@@ -13,12 +13,6 @@ export default function TopNavBar() {
             height={50}
             className="rounded-lg"
           />
-          <Image
-            src="/rebuilt-logo.svg"
-            alt="Rebuilt Logo"
-            width={100}
-            height={50}
-          />
           <span className="font-sans font-semibold text-xl">
             Scouting Tools
           </span>
