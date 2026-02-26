@@ -30,15 +30,17 @@ export default function usePlaybackControls({
       const video = videoRef.current;
       if (!video) return;
       const step = 1 / Math.max(1, DEFAULT_FPS);
+      video.pause();
       video.currentTime = Math.max(0, video.currentTime + step * direction);
       return;
     }
     if (isYouTube && youtubePlayerRef.current) {
       const current = youtubePlayerRef.current.getCurrentTime();
       const step = 1 / DEFAULT_FPS;
+      youtubePlayerRef.current.pauseVideo();
       youtubePlayerRef.current.seekTo(
         Math.max(0, current + step * direction),
-        true,
+        false,
       );
     }
   };

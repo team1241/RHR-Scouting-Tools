@@ -40,6 +40,9 @@ export default function useGlobalShortcuts({
       ) {
         return;
       }
+      if (isHtml5 && target?.tagName === "VIDEO") {
+        return;
+      }
       if (event.key?.toLowerCase() === "u" || event.code === "KeyU") {
         undoLastMark();
         return;
@@ -82,11 +85,13 @@ export default function useGlobalShortcuts({
         return;
       }
       if (event.key === ".") {
+        if (event.repeat) return;
         event.preventDefault();
         stepFrame(1);
         return;
       }
       if (event.key === ",") {
+        if (event.repeat) return;
         event.preventDefault();
         stepFrame(-1);
       }

@@ -4,6 +4,7 @@ export type YouTubePlayer = {
   destroy: () => void;
   loadVideoById: (videoId: string) => void;
   getCurrentTime: () => number;
+  pauseVideo: () => void;
   seekTo: (seconds: number, allowSeekAhead: boolean) => void;
 };
 

@@ -49,12 +49,16 @@ export default function useVideoKeyHandler({
       return;
     }
     if (event.key === ".") {
+      if (event.repeat) return;
       event.preventDefault();
+      event.stopPropagation();
       stepFrame(1);
       return;
     }
     if (event.key === ",") {
+      if (event.repeat) return;
       event.preventDefault();
+      event.stopPropagation();
       stepFrame(-1);
       return;
     }
