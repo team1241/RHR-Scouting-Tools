@@ -2,11 +2,11 @@
 "use client";
 
 import { GENERAL_MATCH_CARD_CATEGORIES } from "@/components/match-card/components/general/categories";
+import { MatchCardContext } from "@/components/match-card/context/MatchCardContext";
 import {
   MatchCardRow,
   useMatchCardColumns,
 } from "@/components/match-card/hooks/use-match-card-columns";
-import { AllianceTeam } from "@/components/match-card/teams";
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/table";
 import {
   SAMPLE_BLUE_ALLIANCE,
-  SAMPLE_MATCH_CARD_DATA,
+  SAMPLE_MATCH_CARD_BY_TEAM,
   SAMPLE_RED_ALLIANCE,
 } from "@/lib/db/sample-match-card-data";
 import { MatchCardData } from "@/lib/db/types";
@@ -27,13 +27,36 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useContext } from "react";
 
-interface GeneralMatchCardProps {}
+export default function GeneralMatchCard() {
+  const { teamsInMatch } = useContext(MatchCardContext);
 
-export default function GeneralMatchCard({}: GeneralMatchCardProps) {
+  const sampleAllianceFromContext = (
+    teamNumbers: number[] | undefined,
+    fallbackAlliance: MatchCardData[]
+  ): MatchCardData[] =>
+    fallbackAlliance.map((fallbackTeamData, index) => {
+      const teamNumber = teamNumbers?.[index];
+      if (!teamNumber) return fallbackTeamData;
+      return {
+        ...(SAMPLE_MATCH_CARD_BY_TEAM.get(teamNumber) ?? fallbackTeamData),
+        team: teamNumber,
+      };
+    });
+
+  const redAlliance = sampleAllianceFromContext(
+    teamsInMatch?.redAlliance?.map((team) => team.team.number),
+    SAMPLE_RED_ALLIANCE
+  );
+  const blueAlliance = sampleAllianceFromContext(
+    teamsInMatch?.blueAlliance?.map((team) => team.team.number),
+    SAMPLE_BLUE_ALLIANCE
+  );
+
   const columns = useMatchCardColumns({
-    redAlliance: SAMPLE_RED_ALLIANCE,
-    blueAlliance: SAMPLE_BLUE_ALLIANCE,
+    redAlliance,
+    blueAlliance,
   });
 
   const data: MatchCardRow[] = GENERAL_MATCH_CARD_CATEGORIES.map(
@@ -41,9 +64,9 @@ export default function GeneralMatchCard({}: GeneralMatchCardProps) {
       label: category.label,
       dataKey: category.dataKey as keyof MatchCardData,
       showTotal: category.showTotal,
-      red: SAMPLE_RED_ALLIANCE,
-      blue: SAMPLE_BLUE_ALLIANCE,
-    }),
+      red: redAlliance,
+      blue: blueAlliance,
+    })
   );
 
   const matchCardTable = useReactTable({
@@ -69,14 +92,14 @@ export default function GeneralMatchCard({}: GeneralMatchCardProps) {
                       isRed &&
                         "bg-red-50 text-center text-red-700 first:rounded-tl-lg",
                       isBlue &&
-                        "bg-blue-50 text-center text-blue-700 last:rounded-tr-lg",
+                        "bg-blue-50 text-center text-blue-700 last:rounded-tr-lg"
                     )}
                   >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext(),
+                          header.getContext()
                         )}
                   </TableHead>
                 );
