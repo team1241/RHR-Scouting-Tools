@@ -30,7 +30,6 @@ export default function usePlaybackControls({
       const video = videoRef.current;
       if (!video) return;
       const step = 1 / Math.max(1, DEFAULT_FPS);
-      video.pause();
       video.currentTime = Math.max(0, video.currentTime + step * direction);
       return;
     }
@@ -40,7 +39,7 @@ export default function usePlaybackControls({
       youtubePlayerRef.current.pauseVideo();
       youtubePlayerRef.current.seekTo(
         Math.max(0, current + step * direction),
-        false,
+        true,
       );
     }
   };

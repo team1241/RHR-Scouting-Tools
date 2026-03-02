@@ -97,8 +97,9 @@ export default function useGlobalShortcuts({
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    const capture = true;
+    window.addEventListener("keydown", handleKeyDown, capture);
+    return () => window.removeEventListener("keydown", handleKeyDown, capture);
   }, [
     endCycle,
     isHtml5,
