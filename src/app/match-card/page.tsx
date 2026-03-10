@@ -1,41 +1,31 @@
-import { loadMatchCardParams } from "@/app/match-card/search-params";
-import MatchCardProvider from "@/components/match-card/context/MatchCardProvider";
 import MatchCard from "@/components/match-card/MatchCard";
-import { EventResponse, TeamsInMatchResponse } from "@/lib/db/types";
+import { EventResponse } from "@/lib/db/types";
+import { getQueryClient } from "@/lib/queries/query-client";
+import { QueryKeys } from "@/lib/queries/query-keys";
 import { fetchScoutingApi } from "@/lib/scouting-api";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Match Card",
 };
 
-export default async function MatchCardPage({
-  searchParams,
-}: PageProps<"/match-card">) {
-  const { eventId, matchNumber } = await loadMatchCardParams(searchParams);
-  const params = new URLSearchParams();
-  params.set("eventId", eventId);
-  params.set("matchNumber", matchNumber);
+export default async function MatchCardPage() {
+  const queryClient = getQueryClient();
 
-  let teamsData;
-  const eventData = await fetchScoutingApi<EventResponse>("/events");
-  try {
-    teamsData = await fetchScoutingApi<TeamsInMatchResponse>(
-      "/teams?" + params.toString()
-    );
-  } catch (error) {}
+  await Promise.allSettled([
+    queryClient.prefetchQuery({
+      queryKey: [QueryKeys.ActiveSeasonEvents],
+      queryFn: async () => {
+        const events = await fetchScoutingApi<EventResponse>("/events");
+        return events;
+      },
+    }),
+  ]);
+
   return (
-    <MatchCardProvider
-      value={{
-        year: eventData?.year,
-        events: eventData?.events,
-        teamsInMatch: {
-          redAlliance: teamsData?.redAlliance,
-          blueAlliance: teamsData?.blueAlliance,
-        },
-      }}
-    >
+    <HydrationBoundary state={dehydrate(queryClient)}>
       <MatchCard />
-    </MatchCardProvider>
+    </HydrationBoundary>
   );
 }

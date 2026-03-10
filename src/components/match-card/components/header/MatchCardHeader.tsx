@@ -1,5 +1,7 @@
 "use client";
 
+import TeamMediaDialog from "@/components/match-card/components/header/TeamMediaDialog";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldContent,
@@ -7,6 +9,14 @@ import {
   FieldLabel,
   FieldTitle,
 } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -15,80 +25,67 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import TeamMediaDialog from "@/components/match-card/components/header/TeamMediaDialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { debounce } from "nuqs";
-import { useMatchCardParams } from "@/components/match-card/hooks/use-match-card-params";
-import { useContext, useEffect, useState, useTransition } from "react";
-import { MatchCardContext } from "@/components/match-card/context/MatchCardContext";
+import { useActiveSeasonEvents } from "@/hooks/use-active-season-events";
 import { cn } from "@/lib/utils";
+import { useMatchCardStore } from "@/stores/use-match-card-store";
+import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
+import { useTeamsInMatch } from "@/hooks/use-teams-in-match";
 
-type MatchCardHeaderProps = {
-  onPendingChange?: (isPending: boolean) => void;
-};
+export default function MatchCardHeader() {
+  const { eventId, matchNumber, setMatchSelection } = useMatchCardStore(
+    useShallow((state) => ({
+      eventId: state.eventId,
+      matchNumber: state.matchNumber,
+      setMatchSelection: state.setMatchSelection,
+    }))
+  );
+  const { data: eventsData } = useActiveSeasonEvents();
+  const { data: teamsData, isFetching } = useTeamsInMatch({
+    eventId,
+    matchNumber,
+  });
+  const [draftEventId, setDraftEventId] = useState(eventId);
+  const [draftMatchNumber, setDraftMatchNumber] = useState(matchNumber);
 
-export default function MatchCardHeader({
-  onPendingChange,
-}: MatchCardHeaderProps) {
-  const { teamsInMatch, events, year } = useContext(MatchCardContext);
-
-  const [{ eventId, matchNumber }, setMatchCardParams] = useMatchCardParams();
-  const [matchNumberInput, setMatchNumberInput] = useState(matchNumber);
-  const [isPending, startTransition] = useTransition();
+  const redAlliance = teamsData?.redAlliance;
+  const blueAlliance = teamsData?.blueAlliance;
 
   useEffect(() => {
-    onPendingChange?.(isPending);
-  }, [isPending, onPendingChange]);
+    setDraftEventId(eventId);
+    setDraftMatchNumber(matchNumber);
+  }, [eventId, matchNumber]);
 
-  useEffect(() => {
-    setMatchNumberInput(matchNumber);
-  }, [matchNumber]);
-
-  const updateMatchCardParams = (
-    params: Partial<{ eventId: string | null; matchNumber: string | null }>,
-    options?: Parameters<typeof setMatchCardParams>[1]
-  ) => {
-    startTransition(() => {
-      void setMatchCardParams(params, options);
+  const handleSubmit = () => {
+    setMatchSelection({
+      eventId: draftEventId,
+      matchNumber: draftMatchNumber,
     });
   };
-
-  const redAlliance = teamsInMatch?.redAlliance;
-  const blueAlliance = teamsInMatch?.blueAlliance;
 
   return (
     <div
       className={cn(
         "transition-opacity duration-200 flex flex-col gap-4",
-        isPending && "opacity-80"
+        isFetching && "opacity-80"
       )}
     >
-      <FieldGroup className="flex flex-row gap-4">
+      <FieldGroup className="flex flex-row flex-wrap items-end gap-4">
         <Field orientation="vertical" className="max-w-fit">
           <FieldLabel className="w-full flex-col items-start gap-2">
             <FieldTitle>Event</FieldTitle>
             <FieldContent>
               <Select
-                value={eventId}
-                onValueChange={(nextValue) =>
-                  updateMatchCardParams({ eventId: nextValue })
-                }
-                disabled={isPending}
+                value={draftEventId}
+                onValueChange={setDraftEventId}
               >
                 <SelectTrigger className="w-100">
                   <SelectValue placeholder={"Select an event..."} />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  {events?.map((event) => (
+                  {eventsData?.events?.map((event) => (
                     <SelectItem key={event.id} value={event.id.toString()}>
-                      {`${year} - ${event.name}`}
+                      {`${eventsData?.year} - ${event.name}`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -103,19 +100,13 @@ export default function MatchCardHeader({
               <Input
                 min={1}
                 type="number"
-                value={matchNumberInput}
-                onChange={(event) => {
-                  const nextMatchNumber = event.target.value;
-                  setMatchNumberInput(nextMatchNumber);
-                  updateMatchCardParams(
-                    { matchNumber: nextMatchNumber },
-                    { limitUrlUpdates: debounce(300) }
-                  );
-                }}
+                value={draftMatchNumber}
+                onChange={(event) => setDraftMatchNumber(event.target.value)}
               />
             </FieldContent>
           </FieldLabel>
         </Field>
+        <Button onClick={handleSubmit}>Load Match</Button>
       </FieldGroup>
 
       <div className="grid gap-2 md:grid-cols-12">

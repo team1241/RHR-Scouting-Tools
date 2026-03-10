@@ -42,11 +42,13 @@ export default function TeamMediaDialog({
   teams,
   allianceColour,
 }: TeamMediaDialogProps) {
+  const [open, setOpen] = useState(false);
   const [api, setApi] = useState<CarouselApi | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const { data: images } = useTeamImages({
     teamNumbers: teams.map((team) => team.team.number),
+    enabled: open,
   });
 
   useEffect(() => {
@@ -65,7 +67,7 @@ export default function TeamMediaDialog({
   }, [api]);
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {teams.length > 0 && (
           <Button variant="outline">

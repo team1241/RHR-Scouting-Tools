@@ -37,13 +37,16 @@ export default function RootLayout({
       lang="en"
       className={`${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
     >
-      <head>
-        <Script
-          src="//unpkg.com/react-scan/dist/auto.global.js"
-          crossOrigin="anonymous"
-          strategy="beforeInteractive"
-        />
-      </head>
+      {process.env.NODE_ENV === "development" &&
+        process.env.NEXT_PUBLIC_ENABLE_REACT_SCAN === "true" && (
+        <head>
+          <Script
+            src="//unpkg.com/react-scan/dist/auto.global.js"
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+        </head>
+      )}
       <body className="bg-background">
         <Providers>
           <TopNavBar />

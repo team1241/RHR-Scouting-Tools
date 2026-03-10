@@ -6,9 +6,13 @@ import { useQuery } from "@tanstack/react-query"
 
 interface UseTeamImagesForMatchProps {
   teamNumbers?: number[]
+  enabled?: boolean
 }
 
-export const useTeamImages = ({ teamNumbers }: UseTeamImagesForMatchProps) => {
+export const useTeamImages = ({
+  teamNumbers,
+  enabled = true,
+}: UseTeamImagesForMatchProps) => {
   return useQuery({
     queryKey: [QueryKeys.TeamImagesForMatch, teamNumbers],
     queryFn: async () => {
@@ -18,7 +22,7 @@ export const useTeamImages = ({ teamNumbers }: UseTeamImagesForMatchProps) => {
 
       return events
     },
-    enabled: teamNumbers && teamNumbers?.length > 0,
+    enabled: enabled && !!teamNumbers && teamNumbers.length > 0,
     retry: false
   })
 }

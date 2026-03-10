@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
-  reactCompiler: true,
+  reactCompiler: false,
   experimental: {
     typedEnv: true,
   },
