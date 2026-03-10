@@ -3,20 +3,23 @@
 import { MatchCardData } from "@/lib/db/types";
 import { ColumnDef } from "@tanstack/react-table";
 
+export type MatchCardTeamData = Partial<MatchCardData> &
+  Pick<MatchCardData, "team">;
+
 export type MatchCardRow = {
   label: string;
   dataKey: keyof MatchCardData;
   showTotal: boolean;
-  red: MatchCardData[];
-  blue: MatchCardData[];
+  red: MatchCardTeamData[];
+  blue: MatchCardTeamData[];
 };
 
 type UseMatchCardColumnsArgs = {
-  redAlliance: MatchCardData[];
-  blueAlliance: MatchCardData[];
+  redAlliance: MatchCardTeamData[];
+  blueAlliance: MatchCardTeamData[];
 };
 
-const formatValue = (value: MatchCardData[keyof MatchCardData]) => {
+const formatValue = (value: MatchCardData[keyof MatchCardData] | undefined) => {
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (typeof value === "number") {
     if (!Number.isFinite(value)) return "-";
@@ -36,7 +39,7 @@ export const useMatchCardColumns = ({
       const val = row.original.red.find((t) => t.team === team.team)?.[
         row.original.dataKey
       ];
-      return formatValue(val!);
+      return formatValue(val);
     },
   }));
 
@@ -47,7 +50,7 @@ export const useMatchCardColumns = ({
       const val = row.original.blue.find((t) => t.team === team.team)?.[
         row.original.dataKey
       ];
-      return formatValue(val!);
+      return formatValue(val);
     },
   }));
 

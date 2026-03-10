@@ -3,6 +3,7 @@
 import { GENERAL_MATCH_CARD_CATEGORIES } from "@/components/match-card/components/general/categories";
 import {
   MatchCardRow,
+  MatchCardTeamData,
   useMatchCardColumns,
 } from "@/components/match-card/hooks/use-match-card-columns";
 import {
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { useMatchCardData } from "@/hooks/use-match-card-data";
 import { useTeamsInMatch } from "@/hooks/use-teams-in-match";
-import { MatchCardData, TeamInMatch } from "@/lib/db/types";
+import { MatchCardData } from "@/lib/db/types";
 import { cn } from "@/lib/utils";
 import { useMatchCardStore } from "@/stores/use-match-card-store";
 import {
@@ -25,6 +26,15 @@ import {
 } from "@tanstack/react-table";
 import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
+
+const mergeAllianceData = (
+  teams: number[],
+  scoutingData: MatchCardData[] | undefined
+): MatchCardTeamData[] =>
+  teams.map((teamNumber) => ({
+    team: teamNumber,
+    ...scoutingData?.find((teamData) => teamData.team === teamNumber),
+  }));
 
 export default function GeneralMatchCard() {
   const { eventId, matchNumber } = useMatchCardStore(
@@ -40,46 +50,28 @@ export default function GeneralMatchCard() {
 
   const { data: scoutingData } = useMatchCardData();
 
-  const buildFallbackTeamData = (teamNumber: number): MatchCardData =>
-    ({
-      team: teamNumber,
-    } as MatchCardData);
-
-  const teamDataByNumber = useMemo(
-    () =>
-      new Map<number, MatchCardData>(
-        (scoutingData ?? []).map((teamData) => [
-          teamData.team,
-          teamData,
-        ])
-      ),
-    [scoutingData]
+  const redAllianceTeamNumbers = useMemo(
+    () => (teamsData?.redAlliance ?? []).map(({ team }) => team.number),
+    [teamsData?.redAlliance]
+  );
+  const blueAllianceTeamNumbers = useMemo(
+    () => (teamsData?.blueAlliance ?? []).map(({ team }) => team.number),
+    [teamsData?.blueAlliance]
   );
 
-  const allianceFromTeams = (
-    allianceTeams: TeamInMatch[] | undefined
-  ): MatchCardData[] =>
-    (allianceTeams ?? []).map(({ team }) => {
-      const teamNumber = team.number;
-      return (
-        teamDataByNumber.get(teamNumber) ?? buildFallbackTeamData(teamNumber)
-      );
-    });
+  const redAlliance = useMemo(() => {
+    return mergeAllianceData(redAllianceTeamNumbers, scoutingData);
+  }, [redAllianceTeamNumbers, scoutingData]);
 
-  const redAlliance = useMemo(
-    () => allianceFromTeams(teamsData?.redAlliance),
-    [teamDataByNumber, teamsData?.redAlliance]
-  );
-  const blueAlliance = useMemo(
-    () => allianceFromTeams(teamsData?.blueAlliance),
-    [teamDataByNumber, teamsData?.blueAlliance]
-  );
+  const blueAlliance = useMemo(() => {
+    return mergeAllianceData(blueAllianceTeamNumbers, scoutingData);
+  }, [blueAllianceTeamNumbers, scoutingData]);
 
   const columns = useMemo(
     () =>
       useMatchCardColumns({
-        redAlliance,
-        blueAlliance,
+        redAlliance: redAlliance ?? [],
+        blueAlliance: blueAlliance ?? [],
       }),
     [blueAlliance, redAlliance]
   );
@@ -90,8 +82,8 @@ export default function GeneralMatchCard() {
         label: category.label,
         dataKey: category.dataKey as keyof MatchCardData,
         showTotal: category.showTotal,
-        red: redAlliance,
-        blue: blueAlliance,
+        red: redAlliance ?? [],
+        blue: blueAlliance ?? [],
       })),
     [blueAlliance, redAlliance]
   );
