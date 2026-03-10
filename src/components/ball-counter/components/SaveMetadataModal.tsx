@@ -50,7 +50,7 @@ export default function SaveMetadataModal({
         const cyclePayload: Cycle[] = cycles.map((cycle, index) => {
           const duration = Math.max(
             0,
-            cycle.endTimestamp - cycle.startTimestamp,
+            cycle.endTimestamp - cycle.startTimestamp
           );
           const bps = duration > 0 ? cycle.numberOfBalls / duration : 0;
           return {
@@ -66,14 +66,14 @@ export default function SaveMetadataModal({
           (acc, cycle) => {
             const duration = Math.max(
               0,
-              cycle.endTimestamp - cycle.startTimestamp,
+              cycle.endTimestamp - cycle.startTimestamp
             );
             if (duration <= 0) return acc;
             acc.totalBalls += cycle.numberOfBalls;
             acc.totalDuration += duration;
             return acc;
           },
-          { totalBalls: 0, totalDuration: 0 },
+          { totalBalls: 0, totalDuration: 0 }
         );
         const overallBps = totalDuration > 0 ? totalBalls / totalDuration : 0;
         await saveBallCountingData({
@@ -90,14 +90,13 @@ export default function SaveMetadataModal({
         form.reset();
         onClose();
         toast.success(
-          `Successfully saved data for Team ${value.teamNumber} - ${value.eventCode} Match ${value.matchNumber}`,
+          `Successfully saved data for Team ${value.teamNumber} - ${value.eventCode} Match ${value.matchNumber}`
         );
       } catch {
         toast.error("Unable to save metadata. Try again.");
       }
     },
   });
-  console.log("🚀 ~ SaveMetadataModal ~ form:", form.getFieldValue("userName"));
 
   useEffect(() => {
     if (!isOpen) return;
