@@ -1,6 +1,7 @@
 "use client";
-"use no memo";
 
+import TeamMediaDialog from "@/components/match-card/components/header/TeamMediaDialog";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldContent,
@@ -8,6 +9,14 @@ import {
   FieldLabel,
   FieldTitle,
 } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -16,79 +25,67 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import TeamMediaDialog from "@/components/match-card/components/header/TeamMediaDialog";
 import { useActiveSeasonEvents } from "@/hooks/use-active-season-events";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { useMatchCardStore } from "@/stores/use-match-card-store";
+import { useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { useTeamsInMatch } from "@/hooks/use-teams-in-match";
-import { parseAsString, useQueryState } from "nuqs";
-import { useDebounceValue } from "usehooks-ts";
 
-interface MatchCardHeaderProps {
-  eventId: string;
-  setEventId: (value: string) => void;
-  matchNumber: string;
-  setMatchNumber: (value: string) => void;
-}
+export default function MatchCardHeader() {
+  const { eventId, matchNumber, setMatchSelection } = useMatchCardStore(
+    useShallow((state) => ({
+      eventId: state.eventId,
+      matchNumber: state.matchNumber,
+      setMatchSelection: state.setMatchSelection,
+    }))
+  );
+  const { data: eventsData } = useActiveSeasonEvents();
+  const { data: teamsData, isFetching } = useTeamsInMatch({
+    eventId,
+    matchNumber,
+  });
+  const [draftEventId, setDraftEventId] = useState(eventId);
+  const [draftMatchNumber, setDraftMatchNumber] = useState(matchNumber);
 
-export default function MatchCardHeader({
-  eventId,
-  setEventId,
-  matchNumber,
-  setMatchNumber,
-}: MatchCardHeaderProps) {
-  const [debouncedEventId] = useDebounceValue(eventId, 250);
-  const [debouncedMatchNumber] = useDebounceValue(matchNumber, 250);
-  const { data, isLoading: isEventsLoading } = useActiveSeasonEvents();
-  const year = data?.year;
+  const redAlliance = teamsData?.redAlliance;
+  const blueAlliance = teamsData?.blueAlliance;
 
-  const { data: teamsInMatchResponse, isLoading: isTeamsLoading } =
-    useTeamsInMatch({
-      eventId: debouncedEventId,
-      matchNumber: debouncedMatchNumber,
+  useEffect(() => {
+    setDraftEventId(eventId);
+    setDraftMatchNumber(matchNumber);
+  }, [eventId, matchNumber]);
+
+  const handleSubmit = () => {
+    setMatchSelection({
+      eventId: draftEventId,
+      matchNumber: draftMatchNumber,
     });
-
-  const redAlliance = teamsInMatchResponse?.redAlliance;
-  const blueAlliance = teamsInMatchResponse?.blueAlliance;
-  const driverStations = [1, 2, 3];
-  const showRedFallback =
-    !isTeamsLoading && (!redAlliance || redAlliance.length === 0);
-  const showBlueFallback =
-    !isTeamsLoading && (!blueAlliance || blueAlliance.length === 0);
+  };
 
   return (
-    <>
-      <FieldGroup className="flex flex-row gap-4">
+    <div
+      className={cn(
+        "transition-opacity duration-200 flex flex-col gap-4",
+        isFetching && "opacity-80"
+      )}
+    >
+      <FieldGroup className="flex flex-row flex-wrap items-end gap-4">
         <Field orientation="vertical" className="max-w-fit">
           <FieldLabel className="w-full flex-col items-start gap-2">
             <FieldTitle>Event</FieldTitle>
             <FieldContent>
               <Select
-                value={eventId ?? ""}
-                onValueChange={(nextValue) => setEventId(nextValue)}
+                value={draftEventId}
+                onValueChange={setDraftEventId}
               >
-                <SelectTrigger
-                  disabled={!data || isEventsLoading}
-                  className="w-100"
-                >
-                  <SelectValue
-                    placeholder={
-                      isEventsLoading
-                        ? "Loading events..."
-                        : "Select an event..."
-                    }
-                  />
+                <SelectTrigger className="w-100">
+                  <SelectValue placeholder={"Select an event..."} />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  {data?.events.map((event) => (
+                  {eventsData?.events?.map((event) => (
                     <SelectItem key={event.id} value={event.id.toString()}>
-                      {`${year} - ${event.name}`}
+                      {`${eventsData?.year} - ${event.name}`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -103,13 +100,13 @@ export default function MatchCardHeader({
               <Input
                 min={1}
                 type="number"
-                value={matchNumber ?? ""}
-                onChange={(event) => setMatchNumber(event.target.value)}
-                disabled={isEventsLoading}
+                value={draftMatchNumber}
+                onChange={(event) => setDraftMatchNumber(event.target.value)}
               />
             </FieldContent>
           </FieldLabel>
         </Field>
+        <Button onClick={handleSubmit}>Load Match</Button>
       </FieldGroup>
 
       <div className="grid gap-2 md:grid-cols-12">
@@ -121,53 +118,26 @@ export default function MatchCardHeader({
           <Table className="text-slate-700">
             <TableHeader className="text-xs uppercase text-slate-500 text-center">
               <TableRow>
-                {isTeamsLoading || showRedFallback
-                  ? driverStations.map((station) => (
-                      <TableHead
-                        key={`red-head-loading-${station}`}
-                        className="text-center"
-                      >
-                        Driver Station {station}
-                      </TableHead>
-                    ))
-                  : redAlliance?.map((team, index) => (
-                      <TableHead
-                        key={`red-head-${team.team.number}`}
-                        className="text-center"
-                      >
-                        Driver Station {index + 1}
-                      </TableHead>
-                    ))}
+                {redAlliance?.map((team, index) => (
+                  <TableHead
+                    key={`red-head-${team.team.number}`}
+                    className="text-center"
+                  >
+                    Driver Station {index + 1}
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow>
-                {isTeamsLoading
-                  ? driverStations.map((station) => (
-                      <TableCell
-                        key={`red-loading-${station}`}
-                        className="text-center"
-                      >
-                        <div className="mx-auto h-5 w-12 rounded bg-slate-200 animate-pulse" />
-                      </TableCell>
-                    ))
-                  : showRedFallback
-                    ? driverStations.map((station) => (
-                        <TableCell
-                          key={`red-empty-${station}`}
-                          className="text-center text-base font-semibold text-slate-500"
-                        >
-                          -
-                        </TableCell>
-                      ))
-                    : redAlliance?.map((team) => (
-                        <TableCell
-                          key={`red-${team.team.number}`}
-                          className="text-center text-base font-semibold text-slate-900"
-                        >
-                          {team.team.number}
-                        </TableCell>
-                      ))}
+                {redAlliance?.map((team) => (
+                  <TableCell
+                    key={`red-${team.team.number}`}
+                    className="text-center text-base font-semibold text-slate-900"
+                  >
+                    {team.team.number}
+                  </TableCell>
+                ))}
               </TableRow>
             </TableBody>
           </Table>
@@ -181,58 +151,31 @@ export default function MatchCardHeader({
           <Table className="text-slate-700">
             <TableHeader className="text-xs uppercase text-slate-500 text-center">
               <TableRow>
-                {isTeamsLoading || showBlueFallback
-                  ? driverStations.map((station) => (
-                      <TableHead
-                        key={`blue-head-loading-${station}`}
-                        className="text-center"
-                      >
-                        Driver Station {station}
-                      </TableHead>
-                    ))
-                  : blueAlliance?.map((team, index) => (
-                      <TableHead
-                        key={`blue-head-${team.team.number}`}
-                        className="text-center"
-                      >
-                        Driver Station {index + 1}
-                      </TableHead>
-                    ))}
+                {blueAlliance?.map((team, index) => (
+                  <TableHead
+                    key={`blue-head-${team.team.number}`}
+                    className="text-center"
+                  >
+                    Driver Station {index + 1}
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow>
-                {isTeamsLoading
-                  ? driverStations.map((station) => (
-                      <TableCell
-                        key={`blue-loading-${station}`}
-                        className="text-center"
-                      >
-                        <div className="mx-auto h-5 w-12 rounded bg-slate-200 animate-pulse" />
-                      </TableCell>
-                    ))
-                  : showBlueFallback
-                    ? driverStations.map((station) => (
-                        <TableCell
-                          key={`blue-empty-${station}`}
-                          className="text-center text-base font-semibold text-slate-500"
-                        >
-                          -
-                        </TableCell>
-                      ))
-                    : blueAlliance?.map((team) => (
-                        <TableCell
-                          key={`blue-${team.team.number}`}
-                          className="text-center text-base font-semibold text-slate-900"
-                        >
-                          {team.team.number}
-                        </TableCell>
-                      ))}
+                {blueAlliance?.map((team) => (
+                  <TableCell
+                    key={`blue-${team.team.number}`}
+                    className="text-center text-base font-semibold text-slate-900"
+                  >
+                    {team.team.number}
+                  </TableCell>
+                ))}
               </TableRow>
             </TableBody>
           </Table>
         </div>
       </div>
-    </>
+    </div>
   );
 }

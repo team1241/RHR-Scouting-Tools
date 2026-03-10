@@ -1,4 +1,3 @@
-'use server'
 import { supabase } from "@/lib/db/supabase";
 
 export async function callMatchCard() {

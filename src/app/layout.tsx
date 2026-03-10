@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "../providers/providers";
 import TopNavBar from "@/components/common/header/Header";
+import Script from "next/script";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -36,6 +37,16 @@ export default function RootLayout({
       lang="en"
       className={`${spaceGrotesk.variable} ${ibmPlexMono.variable}`}
     >
+      {process.env.NODE_ENV === "development" &&
+        process.env.NEXT_PUBLIC_ENABLE_REACT_SCAN === "true" && (
+        <head>
+          <Script
+            src="//unpkg.com/react-scan/dist/auto.global.js"
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+        </head>
+      )}
       <body className="bg-background">
         <Providers>
           <TopNavBar />

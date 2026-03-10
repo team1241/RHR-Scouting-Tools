@@ -1,4 +1,3 @@
-"use no memo";
 "use client";
 
 import { GENERAL_MATCH_CARD_CATEGORIES } from "@/components/match-card/components/general/categories";
@@ -6,7 +5,6 @@ import {
   MatchCardRow,
   useMatchCardColumns,
 } from "@/components/match-card/hooks/use-match-card-columns";
-import { AllianceTeam } from "@/components/match-card/teams";
 import {
   Table,
   TableBody,
@@ -15,35 +13,87 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  SAMPLE_BLUE_ALLIANCE,
-  SAMPLE_MATCH_CARD_DATA,
-  SAMPLE_RED_ALLIANCE,
-} from "@/lib/db/sample-match-card-data";
-import { MatchCardData } from "@/lib/db/types";
+import { useMatchCardData } from "@/hooks/use-match-card-data";
+import { useTeamsInMatch } from "@/hooks/use-teams-in-match";
+import { MatchCardData, TeamInMatch } from "@/lib/db/types";
 import { cn } from "@/lib/utils";
+import { useMatchCardStore } from "@/stores/use-match-card-store";
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useMemo } from "react";
+import { useShallow } from "zustand/react/shallow";
 
-interface GeneralMatchCardProps {}
-
-export default function GeneralMatchCard({}: GeneralMatchCardProps) {
-  const columns = useMatchCardColumns({
-    redAlliance: SAMPLE_RED_ALLIANCE,
-    blueAlliance: SAMPLE_BLUE_ALLIANCE,
+export default function GeneralMatchCard() {
+  const { eventId, matchNumber } = useMatchCardStore(
+    useShallow((state) => ({
+      eventId: state.eventId,
+      matchNumber: state.matchNumber,
+    }))
+  );
+  const { data: teamsData } = useTeamsInMatch({
+    eventId,
+    matchNumber,
   });
 
-  const data: MatchCardRow[] = GENERAL_MATCH_CARD_CATEGORIES.map(
-    (category) => ({
-      label: category.label,
-      dataKey: category.dataKey as keyof MatchCardData,
-      showTotal: category.showTotal,
-      red: SAMPLE_RED_ALLIANCE,
-      blue: SAMPLE_BLUE_ALLIANCE,
-    }),
+  const { data: scoutingData } = useMatchCardData();
+
+  const buildFallbackTeamData = (teamNumber: number): MatchCardData =>
+    ({
+      team: teamNumber,
+    } as MatchCardData);
+
+  const teamDataByNumber = useMemo(
+    () =>
+      new Map<number, MatchCardData>(
+        (scoutingData ?? []).map((teamData) => [
+          teamData.team,
+          teamData,
+        ])
+      ),
+    [scoutingData]
+  );
+
+  const allianceFromTeams = (
+    allianceTeams: TeamInMatch[] | undefined
+  ): MatchCardData[] =>
+    (allianceTeams ?? []).map(({ team }) => {
+      const teamNumber = team.number;
+      return (
+        teamDataByNumber.get(teamNumber) ?? buildFallbackTeamData(teamNumber)
+      );
+    });
+
+  const redAlliance = useMemo(
+    () => allianceFromTeams(teamsData?.redAlliance),
+    [teamDataByNumber, teamsData?.redAlliance]
+  );
+  const blueAlliance = useMemo(
+    () => allianceFromTeams(teamsData?.blueAlliance),
+    [teamDataByNumber, teamsData?.blueAlliance]
+  );
+
+  const columns = useMemo(
+    () =>
+      useMatchCardColumns({
+        redAlliance,
+        blueAlliance,
+      }),
+    [blueAlliance, redAlliance]
+  );
+
+  const data: MatchCardRow[] = useMemo(
+    () =>
+      GENERAL_MATCH_CARD_CATEGORIES.map((category) => ({
+        label: category.label,
+        dataKey: category.dataKey as keyof MatchCardData,
+        showTotal: category.showTotal,
+        red: redAlliance,
+        blue: blueAlliance,
+      })),
+    [blueAlliance, redAlliance]
   );
 
   const matchCardTable = useReactTable({
@@ -69,14 +119,14 @@ export default function GeneralMatchCard({}: GeneralMatchCardProps) {
                       isRed &&
                         "bg-red-50 text-center text-red-700 first:rounded-tl-lg",
                       isBlue &&
-                        "bg-blue-50 text-center text-blue-700 last:rounded-tr-lg",
+                        "bg-blue-50 text-center text-blue-700 last:rounded-tr-lg"
                     )}
                   >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext(),
+                          header.getContext()
                         )}
                   </TableHead>
                 );
