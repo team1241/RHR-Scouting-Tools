@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { parseYouTubeId } from "@/lib/youtube";
 
 export type SourceType = "html5" | "youtube" | null;
@@ -17,12 +17,12 @@ export default function useVideoSource() {
   const [youtubeId, setYouTubeId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  const clearObjectUrl = () => {
+  const clearObjectUrl = useCallback(() => {
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
       objectUrlRef.current = null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
