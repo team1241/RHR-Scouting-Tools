@@ -35,12 +35,12 @@ export default function VideoSourceInputs({
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
       <Input
         type="url"
-        placeholder="Paste a YouTube link"
+        placeholder="Paste a YouTube video or live link"
         value={videoUrl}
         onChange={(event) => onVideoUrlChange(event.target.value)}
       />
       <Button type="button" onClick={onLoad} className="py-2 font-semibold">
-        Load video
+        Load source
       </Button>
     </div>
   );

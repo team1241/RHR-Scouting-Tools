@@ -33,7 +33,7 @@ export default function useVideoSource() {
   const loadFromUrl = () => {
     const trimmed = videoUrl.trim();
     if (!trimmed) {
-      setError("Add a YouTube URL or upload a local video.");
+      setError("Add a YouTube video/live URL or upload a local video.");
       return false;
     }
     const youTubeId = parseYouTubeId(trimmed);
@@ -47,7 +47,7 @@ export default function useVideoSource() {
       setLoadedVideoLabel(trimmed);
       return true;
     }
-    setError("Only YouTube links are supported.");
+    setError("Only YouTube video or live links are supported.");
     return false;
   };
 

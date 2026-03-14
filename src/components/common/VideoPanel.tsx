@@ -80,7 +80,7 @@ export default function VideoPanel({
           <div ref={youtubeContainerRef} className="h-full w-full" />
         ) : (
           <div className="flex h-full items-center justify-center px-6 text-center text-sm text-background">
-            Load a clip to start stepping through frames.
+            Load a YouTube video/live stream or local clip to start tracking.
           </div>
         )}
       </div>
