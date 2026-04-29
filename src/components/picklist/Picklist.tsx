@@ -77,6 +77,8 @@ const TEAM_PREFIX = "team:";
 const COLUMN_PREFIX = "column:";
 const NAME_SAVE_DEBOUNCE_MS = 400;
 
+type TeamSortMode = "teamNumberAsc" | "epaDesc";
+
 const picklistCollisionDetection: CollisionDetection = (args) => {
   if (args.pointerCoordinates) {
     return pointerWithin(args);
@@ -103,14 +105,14 @@ function getColumnDropId(columnId: string) {
 
 function getPlacedTeamNumbers(columns: PicklistColumn[]) {
   return new Set(
-    columns.flatMap((column) => column.teams.map((team) => team.teamNumber))
+    columns.flatMap((column) => column.teams.map((team) => team.teamNumber)),
   );
 }
 
 function findTeamInColumns(columns: PicklistColumn[], teamNumber: number) {
   for (const column of columns) {
     const teamIndex = column.teams.findIndex(
-      (team) => team.teamNumber === teamNumber
+      (team) => team.teamNumber === teamNumber,
     );
 
     if (teamIndex !== -1) {
@@ -123,24 +125,26 @@ function findTeamInColumns(columns: PicklistColumn[], teamNumber: number) {
 
 function mergeColumnsWithEventTeams(
   columns: PicklistColumn[],
-  eventTeams: PicklistTeam[]
+  eventTeams: PicklistTeam[],
 ) {
   const teamsByNumber = new Map(
-    eventTeams.map((team) => [team.teamNumber, team])
+    eventTeams.map((team) => [team.teamNumber, team]),
   );
 
   return columns.map((column) => ({
     ...column,
-    teams: column.teams.map((team) => teamsByNumber.get(team.teamNumber) ?? team),
+    teams: column.teams.map(
+      (team) => teamsByNumber.get(team.teamNumber) ?? team,
+    ),
   }));
 }
 
 function mergeEpaIntoTeams(
   teams: PicklistTeam[],
-  epaValues: Array<{ teamNumber: number; epaMean: number }>
+  epaValues: Array<{ teamNumber: number; epaMean: number }>,
 ) {
   const epaByTeam = new Map(
-    epaValues.map((team) => [team.teamNumber, team.epaMean])
+    epaValues.map((team) => [team.teamNumber, team.epaMean]),
   );
 
   return teams.map((team) => {
@@ -151,12 +155,27 @@ function mergeEpaIntoTeams(
 
 function mergeEpaIntoColumns(
   columns: PicklistColumn[],
-  epaValues: Array<{ teamNumber: number; epaMean: number }>
+  epaValues: Array<{ teamNumber: number; epaMean: number }>,
 ) {
   return columns.map((column) => ({
     ...column,
     teams: mergeEpaIntoTeams(column.teams, epaValues),
   }));
+}
+
+function sortTeams(teams: PicklistTeam[], sortMode: TeamSortMode) {
+  return [...teams].sort((firstTeam, secondTeam) => {
+    if (sortMode === "epaDesc") {
+      const firstEpa = firstTeam.epaMean ?? Number.NEGATIVE_INFINITY;
+      const secondEpa = secondTeam.epaMean ?? Number.NEGATIVE_INFINITY;
+
+      if (firstEpa !== secondEpa) {
+        return secondEpa - firstEpa;
+      }
+    }
+
+    return firstTeam.teamNumber - secondTeam.teamNumber;
+  });
 }
 
 function DraggableSourceTeam({
@@ -246,7 +265,7 @@ function PicklistColumnCard({
       ref={setNodeRef}
       className={cn(
         "min-h-72 min-w-60 flex-1 gap-3 overflow-visible rounded-xl bg-card/80 p-3",
-        isOver && "ring-primary/50 ring-2"
+        isOver && "ring-primary/50 ring-2",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -307,7 +326,7 @@ export default function Picklist() {
   const picklists = useQuery(api.picklists.listAll, {});
   const selectedPicklist = useQuery(
     api.picklists.getById,
-    selectedPicklistId ? { picklistId: selectedPicklistId } : "skip"
+    selectedPicklistId ? { picklistId: selectedPicklistId } : "skip",
   );
   const createBlank = useMutation(api.picklists.createBlank);
   const deletePicklist = useMutation(api.picklists.remove);
@@ -331,6 +350,8 @@ export default function Picklist() {
   const [isSaving, setIsSaving] = useState(false);
   const [nameEditVersion, setNameEditVersion] = useState(0);
   const [columnNameEditVersion, setColumnNameEditVersion] = useState(0);
+  const [teamSortMode, setTeamSortMode] =
+    useState<TeamSortMode>("teamNumberAsc");
   const columnsDirtyRef = useRef(false);
   const eventCodeDirtyRef = useRef(false);
   const lastHydratedPicklistIdRef = useRef<string | null>(null);
@@ -342,7 +363,7 @@ export default function Picklist() {
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   useEffect(() => {
@@ -384,11 +405,15 @@ export default function Picklist() {
 
   const placedTeamNumbers = useMemo(
     () => getPlacedTeamNumbers(columns),
-    [columns]
+    [columns],
   );
   const availableTeams = useMemo(
-    () => eventTeams.filter((team) => !placedTeamNumbers.has(team.teamNumber)),
-    [eventTeams, placedTeamNumbers]
+    () =>
+      sortTeams(
+        eventTeams.filter((team) => !placedTeamNumbers.has(team.teamNumber)),
+        teamSortMode,
+      ),
+    [eventTeams, placedTeamNumbers, teamSortMode],
   );
   const canEditPicklist = selectedPicklist?.canEdit ?? false;
 
@@ -410,7 +435,7 @@ export default function Picklist() {
 
   async function persistColumns(
     nextColumns: PicklistColumn[],
-    editVersion?: number
+    editVersion?: number,
   ) {
     if (!selectedPicklistId || !canEditPicklist) return;
 
@@ -461,7 +486,7 @@ export default function Picklist() {
     if (!canEditPicklist) return;
 
     const nextColumns = columns.map((column) =>
-      column.id === columnId ? { ...column, name: columnName } : column
+      column.id === columnId ? { ...column, name: columnName } : column,
     );
 
     columnsDirtyRef.current = true;
@@ -487,9 +512,11 @@ export default function Picklist() {
       column.id === columnId
         ? {
             ...column,
-            teams: column.teams.filter((team) => team.teamNumber !== teamNumber),
+            teams: column.teams.filter(
+              (team) => team.teamNumber !== teamNumber,
+            ),
           }
-        : column
+        : column,
     );
 
     columnsDirtyRef.current = true;
@@ -599,8 +626,7 @@ export default function Picklist() {
 
   function hasEventData() {
     return (
-      eventTeams.length > 0 ||
-      columns.some((column) => column.teams.length > 0)
+      eventTeams.length > 0 || columns.some((column) => column.teams.length > 0)
     );
   }
 
@@ -615,9 +641,10 @@ export default function Picklist() {
 
   async function loadEventTeamsForCode(
     nextEventCode: string,
-    clearColumns: boolean
+    clearColumns: boolean,
   ) {
-    if (!selectedPicklistId || !canEditPicklist || !nextEventCode.trim()) return;
+    if (!selectedPicklistId || !canEditPicklist || !nextEventCode.trim())
+      return;
 
     setIsLoadingTeams(true);
 
@@ -638,13 +665,15 @@ export default function Picklist() {
         setColumns([]);
       } else {
         setColumns((currentColumns) =>
-          mergeColumnsWithEventTeams(currentColumns, teams)
+          mergeColumnsWithEventTeams(currentColumns, teams),
         );
       }
 
       toast.success(`Loaded ${teams.length} teams`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to load teams");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to load teams",
+      );
     } finally {
       setIsLoadingTeams(false);
     }
@@ -662,9 +691,11 @@ export default function Picklist() {
         epaValues,
       });
 
-      setEventTeams((currentTeams) => mergeEpaIntoTeams(currentTeams, epaValues));
+      setEventTeams((currentTeams) =>
+        mergeEpaIntoTeams(currentTeams, epaValues),
+      );
       setColumns((currentColumns) =>
-        mergeEpaIntoColumns(currentColumns, epaValues)
+        mergeEpaIntoColumns(currentColumns, epaValues),
       );
       toast.success(`Refreshed EPA for ${epaValues.length} teams`);
     } catch {
@@ -727,7 +758,7 @@ export default function Picklist() {
     if (overId.startsWith(COLUMN_PREFIX)) {
       destinationColumnId = overId.slice(COLUMN_PREFIX.length);
       const destinationColumn = columns.find(
-        (column) => column.id === destinationColumnId
+        (column) => column.id === destinationColumnId,
       );
       destinationIndex = destinationColumn?.teams.length ?? 0;
     }
@@ -752,10 +783,10 @@ export default function Picklist() {
               teams: arrayMove(
                 column.teams,
                 originalLocation.teamIndex,
-                overLocation.teamIndex
+                overLocation.teamIndex,
               ),
             }
-          : column
+          : column,
       );
 
       columnsDirtyRef.current = true;
@@ -767,7 +798,7 @@ export default function Picklist() {
     const withoutDraggedTeam = columns.map((column) => ({
       ...column,
       teams: column.teams.filter(
-        (team) => team.teamNumber !== draggedTeam.teamNumber
+        (team) => team.teamNumber !== draggedTeam.teamNumber,
       ),
     }));
     const nextColumns = withoutDraggedTeam.map((column) => {
@@ -856,7 +887,7 @@ export default function Picklist() {
             <Card className="overflow-visible rounded-xl bg-white/80 p-4 shadow-sm">
               <CardHeader className="px-0 pt-0">
                 <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="flex min-w-64 flex-1 flex-col gap-3">
+                  <div className="flex min-w-64 flex-col gap-3 md:w-1/2">
                     <FieldGroup className="gap-3">
                       <Field>
                         <FieldLabel htmlFor="picklist-name">
@@ -869,7 +900,9 @@ export default function Picklist() {
                           onChange={(event) => {
                             nameDirtyRef.current = true;
                             latestNameEditVersionRef.current += 1;
-                            setNameEditVersion(latestNameEditVersionRef.current);
+                            setNameEditVersion(
+                              latestNameEditVersionRef.current,
+                            );
                             setName(event.target.value);
                           }}
                         />
@@ -959,13 +992,29 @@ export default function Picklist() {
 
             <Card className="rounded-xl bg-white/80 p-4 shadow-sm">
               <CardHeader className="px-0 pt-0">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="min-w-52">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex flex-col items-start gap-2">
                     <CardTitle>Event teams</CardTitle>
-                    <CardDescription>
-                      Enter an event code like 2025onbar to pull teams from FRC
-                      Events.
-                    </CardDescription>
+                    <Select
+                      value={teamSortMode}
+                      onValueChange={(value) =>
+                        setTeamSortMode(value as TeamSortMode)
+                      }
+                    >
+                      <SelectTrigger className="w-auto min-w-56">
+                        <SelectValue placeholder="Sort teams" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="teamNumberAsc">
+                            Team number ascending
+                          </SelectItem>
+                          <SelectItem value="epaDesc">
+                            EPA descending
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <form
                     className="flex w-full flex-wrap items-center justify-start gap-2 md:w-auto md:justify-end"
@@ -977,10 +1026,6 @@ export default function Picklist() {
                     <label htmlFor="event-code" className="sr-only">
                       Event code
                     </label>
-                    <p className="max-w-72 text-xs text-muted-foreground">
-                      Teams save with this picklist. Changing events clears every
-                      column.
-                    </p>
                     <Input
                       id="event-code"
                       value={eventCode}
@@ -1071,7 +1116,9 @@ export default function Picklist() {
           >
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Change event and clear columns?</AlertDialogTitle>
+                <AlertDialogTitle>
+                  Change event and clear columns?
+                </AlertDialogTitle>
                 <AlertDialogDescription>
                   Loading teams for a different event will remove every team
                   from every picklist column. This cannot be undone.
