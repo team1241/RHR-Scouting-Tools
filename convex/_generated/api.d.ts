@@ -10,8 +10,10 @@
 
 import type * as ballCounter from "../ballCounter.js";
 import type * as cycles from "../cycles.js";
+import type * as frcEvents from "../frcEvents.js";
 import type * as http from "../http.js";
 import type * as metadata from "../metadata.js";
+import type * as picklists from "../picklists.js";
 import type * as utils from "../utils.js";
 
 import type {
@@ -23,8 +25,10 @@ import type {
 declare const fullApi: ApiFromModules<{
   ballCounter: typeof ballCounter;
   cycles: typeof cycles;
+  frcEvents: typeof frcEvents;
   http: typeof http;
   metadata: typeof metadata;
+  picklists: typeof picklists;
   utils: typeof utils;
 }>;
 
