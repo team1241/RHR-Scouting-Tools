@@ -343,6 +343,9 @@ export default function Picklist() {
   const [columns, setColumns] = useState<PicklistColumn[]>([]);
   const [activeTeam, setActiveTeam] = useState<PicklistTeam | null>(null);
   const [pendingEventCode, setPendingEventCode] = useState<string | null>(null);
+  const [pendingDeleteColumnId, setPendingDeleteColumnId] = useState<
+    string | null
+  >(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
@@ -503,6 +506,20 @@ export default function Picklist() {
     columnsDirtyRef.current = true;
     setColumns(nextColumns);
     await persistColumns(nextColumns);
+  }
+
+  function requestDeleteColumn(columnId: string) {
+    if (!canEditPicklist) return;
+
+    const column = columns.find((currentColumn) => currentColumn.id === columnId);
+    if (!column) return;
+
+    if (column.teams.length > 0) {
+      setPendingDeleteColumnId(columnId);
+      return;
+    }
+
+    void deleteColumn(columnId);
   }
 
   async function removeTeamFromColumn(columnId: string, teamNumber: number) {
@@ -958,9 +975,7 @@ export default function Picklist() {
                         column={column}
                         canEdit={canEditPicklist}
                         onRename={renameColumn}
-                        onDelete={(columnId) => {
-                          void deleteColumn(columnId);
-                        }}
+                        onDelete={requestDeleteColumn}
                         onRemoveTeam={(columnId, teamNumber) => {
                           void removeTeamFromColumn(columnId, teamNumber);
                         }}
@@ -1161,6 +1176,40 @@ export default function Picklist() {
                   }}
                 >
                   Delete picklist
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <AlertDialog
+            open={pendingDeleteColumnId !== null}
+            onOpenChange={(open) => {
+              if (!open) {
+                setPendingDeleteColumnId(null);
+              }
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  Delete column and return teams to the pool?
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Deleting this column with teams still in it will cause all of
+                  its teams to return back to the team pool.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={() => {
+                    if (!pendingDeleteColumnId) return;
+
+                    void deleteColumn(pendingDeleteColumnId);
+                    setPendingDeleteColumnId(null);
+                  }}
+                >
+                  Delete column
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
