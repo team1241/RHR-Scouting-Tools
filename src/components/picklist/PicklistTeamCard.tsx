@@ -26,7 +26,10 @@ export default function PicklistTeamCard({
   style,
 }: PicklistTeamCardProps) {
   const cardStyle = team.primaryColor
-    ? { ...style, backgroundColor: team.primaryColor }
+    ? {
+        ...style,
+        background: `linear-gradient(135deg, ${team.primaryColor}33 0%, ${team.primaryColor}18 45%, transparent 100%)`,
+      }
     : style;
 
   return (
