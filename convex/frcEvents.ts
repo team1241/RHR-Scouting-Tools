@@ -112,6 +112,67 @@ function getStatboticsEventKey(value: string) {
   return `${new Date().getFullYear()}${getStatboticsEventCodeSuffix(normalized)}`;
 }
 
+function addFrcColorFromRecord(
+  colorsByTeam: Map<number, string>,
+  value: unknown,
+  fallbackTeamNumber?: number
+) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return;
+  }
+
+  const record = value as Record<string, unknown>;
+  const colors = record.colors;
+
+  if (!colors || typeof colors !== "object" || Array.isArray(colors)) {
+    return;
+  }
+
+  const teamNumber = getNumber(record, "teamNumber") ?? fallbackTeamNumber;
+  const primaryHex = normalizeColor(
+    getString(colors as Record<string, unknown>, "primaryHex")
+  );
+
+  if (teamNumber && primaryHex) {
+    colorsByTeam.set(teamNumber, primaryHex);
+  }
+}
+
+function addFrcColorsFromPayload(
+  colorsByTeam: Map<number, string>,
+  payload: unknown,
+  fallbackTeamNumber?: number
+) {
+  if (!payload || typeof payload !== "object") {
+    return;
+  }
+
+  if (Array.isArray(payload)) {
+    for (const item of payload) {
+      addFrcColorsFromPayload(colorsByTeam, item, fallbackTeamNumber);
+    }
+    return;
+  }
+
+  addFrcColorFromRecord(colorsByTeam, payload, fallbackTeamNumber);
+
+  for (const [key, value] of Object.entries(payload)) {
+    const teamNumber = Number(key);
+    addFrcColorsFromPayload(
+      colorsByTeam,
+      value,
+      Number.isFinite(teamNumber) ? teamNumber : fallbackTeamNumber
+    );
+  }
+}
+
+function normalizeFrcColors(payload: unknown) {
+  const colorsByTeam = new Map<number, string>();
+  addFrcColorsFromPayload(colorsByTeam, payload);
+
+  return colorsByTeam;
+}
+
 function getCredentials() {
   const basicAuth = process.env.FRC_EVENTS_BASIC_AUTH;
 
@@ -334,6 +395,24 @@ async function getStatboticsEpa(eventCode: string) {
   return normalizeStatboticsEpa(await response.json());
 }
 
+async function getFrcColorsByEvent(eventCode: string) {
+  const url = new URL(
+    `https://api.frc-colors.com/v1/event/${getStatboticsEventKey(eventCode)}`
+  );
+
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    return new Map<number, string>();
+  }
+
+  return normalizeFrcColors(await response.json());
+}
+
 export const getEpaByEvent = action({
   args: {
     eventCode: v.string(),
@@ -362,10 +441,14 @@ export const getTeamsByEvent = action({
     }
 
     const teams = await getFrcTeamsByEvent(season, eventCode);
-    const epaByTeam = await getStatboticsEpa(args.eventCode.trim());
+    const [epaByTeam, colorsByTeam] = await Promise.all([
+      getStatboticsEpa(args.eventCode.trim()),
+      getFrcColorsByEvent(args.eventCode.trim()),
+    ]);
 
     return teams.map((team) => ({
       ...team,
+      primaryColor: colorsByTeam.get(team.teamNumber) ?? team.primaryColor,
       epaMean: epaByTeam.get(team.teamNumber),
     }));
   },
