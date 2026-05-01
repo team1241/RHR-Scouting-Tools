@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "../providers/providers";
 import TopNavBar from "@/components/common/header/Header";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import Script from "next/script";
 
 const spaceGrotesk = Space_Grotesk({
@@ -49,10 +50,12 @@ export default function RootLayout({
       )}
       <body className="bg-background">
         <Providers>
-          <TopNavBar />
-          <div className="min-h-screen pt-12 mx-auto max-w-7xl px-10">
-            {children}
-          </div>
+          <TooltipProvider>
+            <TopNavBar />
+            <div className="min-h-screen pt-12 mx-auto max-w-7xl px-10">
+              {children}
+            </div>
+          </TooltipProvider>
         </Providers>
       </body>
     </html>

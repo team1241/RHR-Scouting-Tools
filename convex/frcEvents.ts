@@ -30,6 +30,7 @@ type FrcTeam = {
 
 const worldDivisionStatboticsCodes: Record<string, string> = {
   ARCHIMEDES: "arc",
+  ARCHMEDES: "arc",
   CURIE: "cur",
   DALY: "dal",
   GALILEO: "gal",
@@ -38,6 +39,22 @@ const worldDivisionStatboticsCodes: Record<string, string> = {
   MILSTEIN: "mil",
   NEWTON: "new",
 };
+
+const worldDivisionAliases: Record<string, string> = {
+  ARCHIMEDES: "ARCHIMEDES",
+  ARCHMEDES: "ARCHIMEDES",
+  CURIE: "CURIE",
+  DALY: "DALY",
+  GALILEO: "GALILEO",
+  HOPPER: "HOPPER",
+  JOHNSON: "JOHNSON",
+  MILSTEIN: "MILSTEIN",
+  NEWTON: "NEWTON",
+};
+
+function normalizeWorldDivision(eventCode: string) {
+  return worldDivisionAliases[eventCode.toUpperCase()] ?? eventCode;
+}
 
 function getString(record: Record<string, unknown>, key: string) {
   const value = record[key];
@@ -84,13 +101,13 @@ function parseEventCode(value: string) {
   if (match) {
     return {
       season: Number(match[1]),
-      eventCode: match[2].toUpperCase(),
+      eventCode: normalizeWorldDivision(match[2]),
     };
   }
 
   return {
     season: new Date().getFullYear(),
-    eventCode: normalized.toUpperCase(),
+    eventCode: normalizeWorldDivision(normalized),
   };
 }
 

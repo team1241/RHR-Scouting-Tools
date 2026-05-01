@@ -11,4 +11,8 @@ export const NAV_LINKS = [
     label: "Picklist",
     href: "/picklist",
   },
+  {
+    label: "Alliance Selection",
+    href: "/alliance-selection",
+  },
 ] as const;

@@ -42,6 +42,7 @@ import Hero from "@/components/common/Hero";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
+import { scheduleDocumentScrollRestore } from "@/lib/scroll-lock";
 import {
   closestCorners,
   DndContext,
@@ -78,6 +79,11 @@ const COLUMN_PREFIX = "column:";
 const NAME_SAVE_DEBOUNCE_MS = 400;
 
 type TeamSortMode = "teamNumberAsc" | "epaDesc";
+
+const teamSortModeLabels: Record<TeamSortMode, string> = {
+  teamNumberAsc: "Team number ascending",
+  epaDesc: "EPA descending",
+};
 
 const picklistCollisionDetection: CollisionDetection = (args) => {
   if (args.pointerCoordinates) {
@@ -358,6 +364,7 @@ export default function Picklist() {
   const columnsDirtyRef = useRef(false);
   const eventCodeDirtyRef = useRef(false);
   const lastHydratedPicklistIdRef = useRef<string | null>(null);
+  const lastScrollRestoredPicklistIdRef = useRef<string | null>(null);
   const latestColumnNameEditVersionRef = useRef(0);
   const latestNameEditVersionRef = useRef(0);
   const nameDirtyRef = useRef(false);
@@ -406,6 +413,20 @@ export default function Picklist() {
     }
   }, [selectedPicklist]);
 
+  useEffect(() => {
+    if (!selectedPicklistId) {
+      lastScrollRestoredPicklistIdRef.current = null;
+      scheduleDocumentScrollRestore();
+      return;
+    }
+
+    if (picklists === undefined || selectedPicklist === undefined) return;
+    if (lastScrollRestoredPicklistIdRef.current === selectedPicklistId) return;
+
+    lastScrollRestoredPicklistIdRef.current = selectedPicklistId;
+    scheduleDocumentScrollRestore();
+  }, [picklists, selectedPicklist, selectedPicklistId]);
+
   const placedTeamNumbers = useMemo(
     () => getPlacedTeamNumbers(columns),
     [columns],
@@ -419,6 +440,14 @@ export default function Picklist() {
     [eventTeams, placedTeamNumbers, teamSortMode],
   );
   const canEditPicklist = selectedPicklist?.canEdit ?? false;
+  const picklistSelectItems = useMemo(
+    () =>
+      (picklists ?? []).map((picklist) => ({
+        value: picklist._id,
+        label: picklist.name,
+      })),
+    [picklists],
+  );
 
   async function createPicklist() {
     setIsCreating(true);
@@ -433,6 +462,17 @@ export default function Picklist() {
       toast.error("Unable to create picklist");
     } finally {
       setIsCreating(false);
+    }
+  }
+
+  async function selectPicklist(value: string) {
+    scheduleDocumentScrollRestore();
+
+    try {
+      await setPicklistId(value || null);
+      setEventTeams([]);
+    } finally {
+      scheduleDocumentScrollRestore();
     }
   }
 
@@ -841,9 +881,14 @@ export default function Picklist() {
         <div className="flex flex-wrap items-center gap-2">
           <Select
             value={picklistId ?? undefined}
+            items={picklistSelectItems}
             onValueChange={(value) => {
-              void setPicklistId(value);
-              setEventTeams([]);
+              void selectPicklist(value);
+            }}
+            onOpenChange={(open) => {
+              if (!open) {
+                scheduleDocumentScrollRestore();
+              }
             }}
           >
             <SelectTrigger className="w-64">
@@ -1017,15 +1062,17 @@ export default function Picklist() {
                       }
                     >
                       <SelectTrigger className="w-auto min-w-56">
-                        <SelectValue placeholder="Sort teams" />
+                        <SelectValue placeholder="Sort teams">
+                          {teamSortModeLabels[teamSortMode]}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
                           <SelectItem value="teamNumberAsc">
-                            Team number ascending
+                            {teamSortModeLabels.teamNumberAsc}
                           </SelectItem>
                           <SelectItem value="epaDesc">
-                            EPA descending
+                            {teamSortModeLabels.epaDesc}
                           </SelectItem>
                         </SelectGroup>
                       </SelectContent>
