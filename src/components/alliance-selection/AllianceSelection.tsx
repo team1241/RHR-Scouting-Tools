@@ -228,9 +228,11 @@ function getTeamLabel(team: Team) {
 
 function TeamSummaryCard({
   team,
+  rank,
   picked = false,
 }: {
   team: Team;
+  rank: number;
   picked?: boolean;
 }) {
   const teamNameRef = useRef<HTMLParagraphElement>(null);
@@ -262,10 +264,10 @@ function TeamSummaryCard({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="w-fit" tabIndex={0}>
+        <div className="w-60" tabIndex={0}>
           <Card
             style={cardStyle}
-            className="min-w-44 max-w-60 gap-1 rounded-xl bg-background p-3 shadow-none"
+            className="w-60 gap-1 rounded-xl bg-background p-3 shadow-none"
           >
             <div className="flex min-w-0 flex-col gap-1">
               <div
@@ -274,6 +276,9 @@ function TeamSummaryCard({
                   picked && "text-muted-foreground line-through",
                 )}
               >
+                <span className="shrink-0 text-sm text-muted-foreground">
+                  #{rank}
+                </span>
                 <span className="shrink-0">{team.teamNumber}</span>
                 <p ref={teamNameRef} className="min-w-0 truncate">
                   {team.nameShort}
@@ -394,10 +399,14 @@ function TrackedPicklistCard({
     () => flattenPicklistTeams(picklist.columns),
     [picklist.columns],
   );
-  const availableTeams = teams.filter(
-    (team) => !pickedTeamNumbers.has(team.teamNumber),
+  const rankedTeams = teams.map((team, index) => ({
+    team,
+    rank: index + 1,
+  }));
+  const availableTeams = rankedTeams.filter(
+    ({ team }) => !pickedTeamNumbers.has(team.teamNumber),
   );
-  const pickedTeams = teams.filter((team) =>
+  const pickedTeams = rankedTeams.filter(({ team }) =>
     pickedTeamNumbers.has(team.teamNumber),
   );
 
@@ -432,8 +441,12 @@ function TrackedPicklistCard({
           <p className="text-sm font-medium">Top 5 available</p>
           {availableTeams.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {availableTeams.slice(0, 5).map((team) => (
-                <TeamSummaryCard key={team.teamNumber} team={team} />
+              {availableTeams.slice(0, 5).map(({ team, rank }) => (
+                <TeamSummaryCard
+                  key={team.teamNumber}
+                  team={team}
+                  rank={rank}
+                />
               ))}
             </div>
           ) : (
@@ -448,10 +461,11 @@ function TrackedPicklistCard({
               Picked from this list
             </p>
             <div className="flex flex-wrap gap-2">
-              {pickedTeams.slice(0, 8).map((pickedTeam) => (
+              {pickedTeams.slice(0, 8).map(({ team, rank }) => (
                 <TeamSummaryCard
-                  key={pickedTeam.teamNumber}
-                  team={pickedTeam}
+                  key={team.teamNumber}
+                  team={team}
+                  rank={rank}
                   picked
                 />
               ))}
