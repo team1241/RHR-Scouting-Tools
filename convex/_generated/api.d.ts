@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as allianceSelections from "../allianceSelections.js";
 import type * as ballCounter from "../ballCounter.js";
 import type * as cycles from "../cycles.js";
 import type * as frcEvents from "../frcEvents.js";
@@ -23,6 +24,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  allianceSelections: typeof allianceSelections;
   ballCounter: typeof ballCounter;
   cycles: typeof cycles;
   frcEvents: typeof frcEvents;

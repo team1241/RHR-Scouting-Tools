@@ -60,5 +60,70 @@ export default defineSchema({
     updatedAt: v.string(),
   })
     .index("by_owner", ["ownerSubject"])
-    .index("by_owner_and_updated", ["ownerSubject", "updatedAt"]),
+    .index("by_owner_and_updated", ["ownerSubject", "updatedAt"])
+    .index("by_event_code", ["eventCode"]),
+  allianceSelections: defineTable({
+    name: v.string(),
+    ownerSubject: v.optional(v.string()),
+    eventCode: v.optional(v.string()),
+    eventTeams: v.optional(v.array(
+      v.object({
+        teamNumber: v.number(),
+        nameShort: v.string(),
+        primaryColor: v.optional(v.string()),
+        epaMean: v.optional(v.number()),
+        city: v.optional(v.string()),
+        stateProv: v.optional(v.string()),
+        country: v.optional(v.string()),
+      })
+    )),
+    trackedPicklistIds: v.optional(v.array(v.id("picklists"))),
+    alliances: v.optional(v.array(
+      v.object({
+        id: v.string(),
+        captain: v.optional(v.object({
+          teamNumber: v.number(),
+          nameShort: v.string(),
+          primaryColor: v.optional(v.string()),
+          epaMean: v.optional(v.number()),
+          city: v.optional(v.string()),
+          stateProv: v.optional(v.string()),
+          country: v.optional(v.string()),
+        })),
+        firstPick: v.optional(v.object({
+          teamNumber: v.number(),
+          nameShort: v.string(),
+          primaryColor: v.optional(v.string()),
+          epaMean: v.optional(v.number()),
+          city: v.optional(v.string()),
+          stateProv: v.optional(v.string()),
+          country: v.optional(v.string()),
+        })),
+        secondPick: v.optional(v.object({
+          teamNumber: v.number(),
+          nameShort: v.string(),
+          primaryColor: v.optional(v.string()),
+          epaMean: v.optional(v.number()),
+          city: v.optional(v.string()),
+          stateProv: v.optional(v.string()),
+          country: v.optional(v.string()),
+        })),
+        thirdPick: v.optional(v.object({
+          teamNumber: v.number(),
+          nameShort: v.string(),
+          primaryColor: v.optional(v.string()),
+          epaMean: v.optional(v.number()),
+          city: v.optional(v.string()),
+          stateProv: v.optional(v.string()),
+          country: v.optional(v.string()),
+        })),
+      })
+    )),
+    includeThirdPick: v.optional(v.boolean()),
+    createdAt: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_owner", ["ownerSubject"])
+    .index("by_owner_and_updated", ["ownerSubject", "updatedAt"])
+    .index("by_event_code", ["eventCode"]),
 })

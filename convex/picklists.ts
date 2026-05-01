@@ -156,6 +156,25 @@ function withPermissions(
   };
 }
 
+function normalizeEventCode(eventCode: string) {
+  const normalized = eventCode.trim().toLowerCase();
+  const match = normalized.match(/^(\d{4})([a-z0-9]+)$/);
+  const code = match ? match[2] : normalized;
+  const worldDivisions: Record<string, string> = {
+    archimedes: "archimedes",
+    archmedes: "archimedes",
+    curie: "curie",
+    daly: "daly",
+    galileo: "galileo",
+    hopper: "hopper",
+    johnson: "johnson",
+    milstein: "milstein",
+    newton: "newton",
+  };
+
+  return worldDivisions[code] ?? normalized;
+}
+
 async function requirePicklistOwner(
   ctx: MutationCtx,
   picklistId: Id<"picklists">
@@ -187,6 +206,31 @@ export const listAll = query({
 
     const picklists = await ctx.db
       .query("picklists")
+      .order("desc")
+      .collect();
+
+    return picklists.map((picklist) =>
+      withPermissions(normalizePicklist(picklist), identity?.subject)
+    );
+  },
+});
+
+export const listByEventCode = query({
+  args: {
+    eventCode: v.string(),
+  },
+  returns: v.array(picklistWithPermissionsValidator),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const eventCode = normalizeEventCode(args.eventCode);
+
+    if (!eventCode) {
+      return [];
+    }
+
+    const picklists = await ctx.db
+      .query("picklists")
+      .withIndex("by_event_code", (q) => q.eq("eventCode", eventCode))
       .order("desc")
       .collect();
 
@@ -271,7 +315,7 @@ export const replaceEventTeams = mutation({
       : mergeTeamMetadata(picklist.columns ?? [], args.eventTeams);
 
     await ctx.db.patch(args.picklistId, {
-      eventCode: args.eventCode.trim(),
+      eventCode: normalizeEventCode(args.eventCode),
       eventTeams: args.eventTeams,
       columns,
       updatedAt: getFormattedTimestamp(),
