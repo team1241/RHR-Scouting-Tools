@@ -3,6 +3,7 @@ export type PicklistTeam = {
   nameShort: string;
   primaryColor?: string;
   epaMean?: number;
+  rank?: number;
   city?: string;
   stateProv?: string;
   country?: string;

@@ -8,6 +8,7 @@ const teamValidator = v.object({
   nameShort: v.string(),
   primaryColor: v.optional(v.string()),
   epaMean: v.optional(v.number()),
+  rank: v.optional(v.number()),
   city: v.optional(v.string()),
   stateProv: v.optional(v.string()),
   country: v.optional(v.string()),
@@ -24,6 +25,11 @@ const teamEpaValidator = v.object({
   epaMean: v.number(),
 });
 
+const teamRankValidator = v.object({
+  teamNumber: v.number(),
+  rank: v.number(),
+});
+
 function mergeTeamMetadata(
   columns: Array<{
     id: string;
@@ -33,6 +39,7 @@ function mergeTeamMetadata(
       nameShort: string;
       primaryColor?: string;
       epaMean?: number;
+      rank?: number;
       city?: string;
       stateProv?: string;
       country?: string;
@@ -43,6 +50,7 @@ function mergeTeamMetadata(
     nameShort: string;
     primaryColor?: string;
     epaMean?: number;
+    rank?: number;
     city?: string;
     stateProv?: string;
     country?: string;
@@ -72,6 +80,20 @@ function mergeTeamEpa<T extends { teamNumber: number; epaMean?: number }>(
   });
 }
 
+function mergeTeamRank<T extends { teamNumber: number; rank?: number }>(
+  teams: T[],
+  rankValues: Array<{ teamNumber: number; rank: number }>
+) {
+  const rankByTeam = new Map(
+    rankValues.map((team) => [team.teamNumber, team.rank])
+  );
+
+  return teams.map((team) => {
+    const rank = rankByTeam.get(team.teamNumber);
+    return rank === undefined ? team : { ...team, rank };
+  });
+}
+
 const picklistWithPermissionsValidator = v.object({
   _id: v.id("picklists"),
   _creationTime: v.number(),
@@ -96,6 +118,7 @@ type NormalizedPicklist = {
     nameShort: string;
     primaryColor?: string;
     epaMean?: number;
+    rank?: number;
     city?: string;
     stateProv?: string;
     country?: string;
@@ -108,6 +131,7 @@ type NormalizedPicklist = {
       nameShort: string;
       primaryColor?: string;
       epaMean?: number;
+      rank?: number;
       city?: string;
       stateProv?: string;
       country?: string;
@@ -357,6 +381,28 @@ export const replaceEpaValues = mutation({
       columns: (picklist.columns ?? []).map((column) => ({
         ...column,
         teams: mergeTeamEpa(column.teams, args.epaValues),
+      })),
+      updatedAt: getFormattedTimestamp(),
+    });
+
+    return args.picklistId;
+  },
+});
+
+export const replaceRankValues = mutation({
+  args: {
+    picklistId: v.id("picklists"),
+    rankValues: v.array(teamRankValidator),
+  },
+  returns: v.id("picklists"),
+  handler: async (ctx, args) => {
+    const picklist = await requirePicklistOwner(ctx, args.picklistId);
+
+    await ctx.db.patch(args.picklistId, {
+      eventTeams: mergeTeamRank(picklist.eventTeams ?? [], args.rankValues),
+      columns: (picklist.columns ?? []).map((column) => ({
+        ...column,
+        teams: mergeTeamRank(column.teams, args.rankValues),
       })),
       updatedAt: getFormattedTimestamp(),
     });

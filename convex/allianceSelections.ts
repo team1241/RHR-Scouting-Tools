@@ -8,6 +8,7 @@ const teamValidator = v.object({
   nameShort: v.string(),
   primaryColor: v.optional(v.string()),
   epaMean: v.optional(v.number()),
+  rank: v.optional(v.number()),
   city: v.optional(v.string()),
   stateProv: v.optional(v.string()),
   country: v.optional(v.string()),
@@ -41,6 +42,7 @@ type Team = {
   nameShort: string;
   primaryColor?: string;
   epaMean?: number;
+  rank?: number;
   city?: string;
   stateProv?: string;
   country?: string;

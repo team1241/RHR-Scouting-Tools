@@ -78,11 +78,12 @@ const TEAM_PREFIX = "team:";
 const COLUMN_PREFIX = "column:";
 const NAME_SAVE_DEBOUNCE_MS = 400;
 
-type TeamSortMode = "teamNumberAsc" | "epaDesc";
+type TeamSortMode = "teamNumberAsc" | "epaDesc" | "rankAsc";
 
 const teamSortModeLabels: Record<TeamSortMode, string> = {
   teamNumberAsc: "Team number ascending",
   epaDesc: "EPA descending",
+  rankAsc: "Ranking ascending",
 };
 
 const picklistCollisionDetection: CollisionDetection = (args) => {
@@ -169,6 +170,30 @@ function mergeEpaIntoColumns(
   }));
 }
 
+function mergeRankIntoTeams(
+  teams: PicklistTeam[],
+  rankValues: Array<{ teamNumber: number; rank: number }>,
+) {
+  const rankByTeam = new Map(
+    rankValues.map((team) => [team.teamNumber, team.rank]),
+  );
+
+  return teams.map((team) => {
+    const rank = rankByTeam.get(team.teamNumber);
+    return rank === undefined ? team : { ...team, rank };
+  });
+}
+
+function mergeRankIntoColumns(
+  columns: PicklistColumn[],
+  rankValues: Array<{ teamNumber: number; rank: number }>,
+) {
+  return columns.map((column) => ({
+    ...column,
+    teams: mergeRankIntoTeams(column.teams, rankValues),
+  }));
+}
+
 function sortTeams(teams: PicklistTeam[], sortMode: TeamSortMode) {
   return [...teams].sort((firstTeam, secondTeam) => {
     if (sortMode === "epaDesc") {
@@ -177,6 +202,15 @@ function sortTeams(teams: PicklistTeam[], sortMode: TeamSortMode) {
 
       if (firstEpa !== secondEpa) {
         return secondEpa - firstEpa;
+      }
+    }
+
+    if (sortMode === "rankAsc") {
+      const firstRank = firstTeam.rank ?? Number.POSITIVE_INFINITY;
+      const secondRank = secondTeam.rank ?? Number.POSITIVE_INFINITY;
+
+      if (firstRank !== secondRank) {
+        return firstRank - secondRank;
       }
     }
 
@@ -339,8 +373,10 @@ export default function Picklist() {
   const replaceColumns = useMutation(api.picklists.replaceColumns);
   const replaceEpaValues = useMutation(api.picklists.replaceEpaValues);
   const replaceEventTeams = useMutation(api.picklists.replaceEventTeams);
+  const replaceRankValues = useMutation(api.picklists.replaceRankValues);
   const renamePicklist = useMutation(api.picklists.rename);
   const getEpaByEvent = useAction(api.frcEvents.getEpaByEvent);
+  const getRankingsByEvent = useAction(api.frcEvents.getRankingsByEvent);
   const getTeamsByEvent = useAction(api.frcEvents.getTeamsByEvent);
 
   const [name, setName] = useState("Untitled picklist");
@@ -356,6 +392,7 @@ export default function Picklist() {
   const [isCreating, setIsCreating] = useState(false);
   const [isLoadingTeams, setIsLoadingTeams] = useState(false);
   const [isRefreshingEpa, setIsRefreshingEpa] = useState(false);
+  const [isRefreshingRankings, setIsRefreshingRankings] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [nameEditVersion, setNameEditVersion] = useState(0);
   const [columnNameEditVersion, setColumnNameEditVersion] = useState(0);
@@ -762,6 +799,32 @@ export default function Picklist() {
     }
   }
 
+  async function refreshRankValues() {
+    if (!selectedPicklistId || !canEditPicklist || !eventCode.trim()) return;
+
+    setIsRefreshingRankings(true);
+
+    try {
+      const rankValues = await getRankingsByEvent({ eventCode });
+      await replaceRankValues({
+        picklistId: selectedPicklistId,
+        rankValues,
+      });
+
+      setEventTeams((currentTeams) =>
+        mergeRankIntoTeams(currentTeams, rankValues),
+      );
+      setColumns((currentColumns) =>
+        mergeRankIntoColumns(currentColumns, rankValues),
+      );
+      toast.success(`Refreshed rankings for ${rankValues.length} teams`);
+    } catch {
+      toast.error("Unable to refresh rankings");
+    } finally {
+      setIsRefreshingRankings(false);
+    }
+  }
+
   function submitEventCode() {
     if (!canEditPicklist) return;
 
@@ -1074,6 +1137,9 @@ export default function Picklist() {
                           <SelectItem value="epaDesc">
                             {teamSortModeLabels.epaDesc}
                           </SelectItem>
+                          <SelectItem value="rankAsc">
+                            {teamSortModeLabels.rankAsc}
+                          </SelectItem>
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -1121,6 +1187,23 @@ export default function Picklist() {
                       }}
                     >
                       {isRefreshingEpa ? "Refreshing..." : "Refresh EPA"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={
+                        !canEditPicklist ||
+                        isRefreshingRankings ||
+                        !eventCode.trim() ||
+                        eventTeams.length === 0
+                      }
+                      onClick={() => {
+                        void refreshRankValues();
+                      }}
+                    >
+                      {isRefreshingRankings
+                        ? "Refreshing..."
+                        : "Refresh rankings"}
                     </Button>
                   </form>
                 </div>

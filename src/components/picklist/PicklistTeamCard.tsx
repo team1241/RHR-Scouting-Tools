@@ -50,9 +50,15 @@ export default function PicklistTeamCard({
             <Badge variant="secondary">{team.teamNumber}</Badge>
             <p className="truncate text-xs font-semibold">{team.nameShort}</p>
           </div>
-          {team.epaMean !== undefined ? (
+          {team.rank !== undefined || team.epaMean !== undefined ? (
             <p className="text-[11px] font-medium text-muted-foreground">
-              EPA {team.epaMean.toFixed(1)}
+              {team.rank !== undefined ? `Rank ${team.rank}` : null}
+              {team.rank !== undefined && team.epaMean !== undefined
+                ? " | "
+                : null}
+              {team.epaMean !== undefined
+                ? `EPA ${team.epaMean.toFixed(1)}`
+                : null}
             </p>
           ) : null}
         </div>

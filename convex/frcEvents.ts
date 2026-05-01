@@ -8,6 +8,7 @@ const frcTeamValidator = v.object({
   nameShort: v.string(),
   primaryColor: v.optional(v.string()),
   epaMean: v.optional(v.number()),
+  rank: v.optional(v.number()),
   city: v.optional(v.string()),
   stateProv: v.optional(v.string()),
   country: v.optional(v.string()),
@@ -18,11 +19,17 @@ const teamEpaValidator = v.object({
   epaMean: v.number(),
 });
 
+const teamRankValidator = v.object({
+  teamNumber: v.number(),
+  rank: v.number(),
+});
+
 type FrcTeam = {
   teamNumber: number;
   nameShort: string;
   primaryColor?: string;
   epaMean?: number;
+  rank?: number;
   city?: string;
   stateProv?: string;
   country?: string;
@@ -331,15 +338,18 @@ async function getFrcTeamsByEvent(season: number, eventCode: string) {
   }
 
   const pageTotal = getPageTotal(firstPage);
+  const remainingPages = await Promise.all(
+    Array.from({ length: Math.max(pageTotal - 1, 0) }, (_, index) =>
+      fetchFrcTeamsPage({
+        authorization,
+        eventCode,
+        page: index + 2,
+        season,
+      })
+    )
+  );
 
-  for (let page = 2; page <= pageTotal; page += 1) {
-    const payload = await fetchFrcTeamsPage({
-      authorization,
-      eventCode,
-      page,
-      season,
-    });
-
+  for (const payload of remainingPages) {
     for (const team of normalizeTeams(payload)) {
       teamsByNumber.set(team.teamNumber, team);
     }
@@ -348,6 +358,56 @@ async function getFrcTeamsByEvent(season: number, eventCode: string) {
   return [...teamsByNumber.values()].sort(
     (a, b) => a.teamNumber - b.teamNumber
   );
+}
+
+function normalizeFrcRankings(payload: unknown) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return new Map<number, number>();
+  }
+
+  const record = payload as Record<string, unknown>;
+  const rankings = Array.isArray(record.rankings)
+    ? record.rankings
+    : Array.isArray(record.Rankings)
+      ? record.Rankings
+      : [];
+  const rankByTeam = new Map<number, number>();
+
+  for (const item of rankings) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      continue;
+    }
+
+    const ranking = item as Record<string, unknown>;
+    const teamNumber = getNumber(ranking, "teamNumber");
+    const rank = getNumber(ranking, "rank");
+
+    if (teamNumber !== undefined && rank !== undefined) {
+      rankByTeam.set(teamNumber, rank);
+    }
+  }
+
+  return rankByTeam;
+}
+
+async function getFrcRankingsByEvent(season: number, eventCode: string) {
+  const authorization = getCredentials();
+  const url = new URL(
+    `https://frc-api.firstinspires.org/v3.0/${season}/rankings/${eventCode}`
+  );
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: authorization,
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    return new Map<number, number>();
+  }
+
+  return normalizeFrcRankings(await response.json());
 }
 
 function normalizeStatboticsEpa(payload: unknown) {
@@ -445,6 +505,27 @@ export const getEpaByEvent = action({
   },
 });
 
+export const getRankingsByEvent = action({
+  args: {
+    eventCode: v.string(),
+  },
+  returns: v.array(teamRankValidator),
+  handler: async (_ctx, args) => {
+    const { season, eventCode } = parseEventCode(args.eventCode);
+
+    if (!eventCode) {
+      return [];
+    }
+
+    const rankByTeam = await getFrcRankingsByEvent(season, eventCode);
+
+    return [...rankByTeam.entries()].map(([teamNumber, rank]) => ({
+      teamNumber,
+      rank,
+    }));
+  },
+});
+
 export const getTeamsByEvent = action({
   args: {
     eventCode: v.string(),
@@ -457,8 +538,9 @@ export const getTeamsByEvent = action({
       return [];
     }
 
-    const teams = await getFrcTeamsByEvent(season, eventCode);
-    const [epaByTeam, colorsByTeam] = await Promise.all([
+    const [teams, rankByTeam, epaByTeam, colorsByTeam] = await Promise.all([
+      getFrcTeamsByEvent(season, eventCode),
+      getFrcRankingsByEvent(season, eventCode),
       getStatboticsEpa(args.eventCode.trim()),
       getFrcColorsByEvent(args.eventCode.trim()),
     ]);
@@ -467,6 +549,7 @@ export const getTeamsByEvent = action({
       ...team,
       primaryColor: colorsByTeam.get(team.teamNumber) ?? team.primaryColor,
       epaMean: epaByTeam.get(team.teamNumber),
+      rank: rankByTeam.get(team.teamNumber),
     }));
   },
 });
