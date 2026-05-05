@@ -588,7 +588,9 @@ export default function Picklist() {
   function requestDeleteColumn(columnId: string) {
     if (!canEditPicklist) return;
 
-    const column = columns.find((currentColumn) => currentColumn.id === columnId);
+    const column = columns.find(
+      (currentColumn) => currentColumn.id === columnId,
+    );
     if (!column) return;
 
     if (column.teams.length > 0) {
@@ -938,7 +940,7 @@ export default function Picklist() {
     !selectedPicklistId || selectedPicklist !== undefined;
 
   return (
-    <div className="flex min-h-screen w-[calc(100vw-2rem)] max-w-[1800px] flex-col gap-4 pb-12 pt-10 [margin-left:calc(50%_-_50vw_+_1rem)]">
+    <div className="flex min-h-screen flex-col gap-4 pb-12 pt-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Hero text="Picklist" />
         <div className="flex flex-wrap items-center gap-2">

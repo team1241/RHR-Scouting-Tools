@@ -554,7 +554,6 @@ export default function AllianceSelection() {
   );
   const allianceSelectionItems = useMemo(
     () => [
-      { value: "", label: "Select an alliance selection" },
       ...(allianceSelections ?? []).map((selection) => ({
         value: selection._id,
         label: selection.name,
@@ -896,7 +895,7 @@ export default function AllianceSelection() {
   }
 
   return (
-    <div className="flex min-h-screen w-[calc(100vw-2rem)] max-w-[1800px] flex-col gap-4 pb-12 pt-10 [margin-left:calc(50%_-_50vw_+_1rem)]">
+    <div className="flex min-h-screen flex-col gap-4 pb-12 pt-10">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
           <Hero text="Alliance Selection" />
@@ -923,9 +922,8 @@ export default function AllianceSelection() {
             <SelectTrigger className="w-72">
               <SelectValue placeholder="Select an alliance selection" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="w-72">
               <SelectGroup>
-                <SelectItem value="">Select an alliance selection</SelectItem>
                 {(allianceSelections ?? []).map((selection) => (
                   <SelectItem key={selection._id} value={selection._id}>
                     {selection.name}
